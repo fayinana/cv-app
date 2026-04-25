@@ -1,19 +1,15 @@
-import { StaticPage } from "@/components/layout/static-page";
-
 export default function AboutPage() {
   return (
-    <StaticPage
-      title="About CVSmart"
-      subtitle="AI-assisted resume workflows with a cleaner Next.js architecture."
-    >
-      <p>
-        CVSmart helps candidates analyze resumes, prepare for interviews, and
-        generate improved CV drafts.
-      </p>
-      <p>
-        This migration keeps the same user-facing design while upgrading backend
-        architecture for maintainability.
-      </p>
-    </StaticPage>
+    <div className="app-page min-h-screen bg-background text-foreground overflow-x-hidden">
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-primary rounded-full filter blur-[150px] opacity-20" />
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-success rounded-full filter blur-[150px] opacity-20" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-ring rounded-full filter blur-[150px] opacity-10" />
+      </div>
+      <main className="relative z-10 container mx-auto max-w-4xl p-6 md:p-8 py-16">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">About <span className="text-display font-serif italic">CVSmart</span></h1>
+        <p className="text-muted-foreground text-lg leading-relaxed mb-8">CVSmart is an AI-assisted platform that helps you analyze, improve, and tailor your resume to modern job descriptions.</p>
+      </main>
+    </div>
   );
 }

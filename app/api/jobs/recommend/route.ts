@@ -1,5 +1,6 @@
 import { jobsRequestSchema } from "@/lib/contracts";
 import { fail, ok } from "@/lib/api-response";
+import { recommendJobs } from "@/lib/logic/jobs";
 
 export async function POST(req: Request) {
   try {
@@ -10,19 +11,8 @@ export async function POST(req: Request) {
       return fail("BAD_REQUEST", "Invalid jobs payload", 400);
     }
 
-    return ok({
-      searchQuery: parsed.data.query,
-      jobs: [
-        {
-          title: "Frontend Engineer",
-          company: "Example Corp",
-          location: parsed.data.location ?? "Remote",
-          link: "https://example.com/jobs/frontend-engineer",
-          snippet: "Placeholder job recommendation contract response.",
-          source: "placeholder",
-        },
-      ],
-    });
+    const result = await recommendJobs(parsed.data.query, parsed.data.location);
+    return ok(result);
   } catch {
     return fail("INTERNAL_ERROR", "Failed to process jobs request", 500);
   }

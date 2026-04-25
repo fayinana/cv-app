@@ -1,18 +1,10 @@
-import Link from "next/link";
-import { SignupForm } from "@/components/auth/signup-form";
+import SignupForm from "@/components/auth/signup-form";
+import AuthLayout from "@/components/auth/auth-layout";
 
 export default function SignupPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md items-center p-6">
-      <div className="w-full space-y-4">
-        <SignupForm />
-        <p className="text-sm text-gray-600">
-          Already have an account?{" "}
-          <Link className="underline" href="/login">
-            Sign in
-          </Link>
-        </p>
-      </div>
-    </main>
+    <AuthLayout title="Create an account" subtitle="Enter your details to get started">
+      <SignupForm />
+    </AuthLayout>
   );
 }

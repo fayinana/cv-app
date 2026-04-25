@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "brand": "CVSmart",
+    "features": "Fe'umsa",
+    "howItWorks": "Akkaattin Tajaajila",
+    "dashboard": "Daashboordii",
+    "profile": "Profaayilii",
+    "settings": "Sirna",
+    "logout": "Ba'i",
+    "signIn": "Seeni",
+    "signUp": "Galmaa'aa",
+    "buildCv": "CV Ijaarsi",
+    "analyze": "Qorannoo"
+  },
+  "home": {
+    "heroTitle1": "Seenaa Du'a Keessan,",
+    "heroTitle2": "Humnaan Baha",
+    "heroSubtitle": "AI keenya seenaa du'a keessan qora, dadhabbii mul'isa, erga ga'aa hojii abjuu argachuuf gargaarsa ta'e kenna.",
+    "analyzeMyResume": "Seenaa Du'a Koo Qora",
+    "seeHowItWorks": "Akkaattin Tajaajilu Ilaali",
+    "aiPowered": "Qorannoo AI'n Baha",
+    "atsOptimization": "Sirna ATS Gahumsuu",
+    "actionableSuggestions": "Gargaarsa Gocha Qabu",
+    "keyFeatures": "Fe'umsa Gurguddaa",
+    "unlockPower": "Humna",
+    "aiDrivenAnalysis": "Qorannoo AI'n Baha",
+    "aiPoweredTitle": "Qorannoo AI'n Baha",
+    "aiPoweredDesc": "AI keenya seenaa du'a keessan qora, yaada guutuu qabiyyee, ijaarsa fi saalaa kenna.",
+    "atsTitle": "Sirna ATS Gahumsuu",
+    "atsDesc": "Seenaa du'a keessan sirna qorannoo filannoo irraa gahuuf teessoo kenna.",
+    "actionableTitle": "Gargaarsa Gocha Qabu",
+    "actionableDesc": "Seenaa du'a keessan cimsuuf fi gaaffii ga'aa dabalatuuf yaada adeemsa kenna.",
+    "learnMore": "Dabalataan Baradhu"
+  },
+  "footer": {
+    "allRightsReserved": "Mirga hundi kan eegamu.",
+    "tagline": "CVSmart seenaa du'a qorachuuf fi hojii barbaadattoota gaaffii dabalatu argachuuf gargaarsa ta'e kennaaf AI gahaa fayyadama.",
+    "product": "Oomisha",
+    "teamDetails": "Ga'affii Garee",
+    "features": "Fe'umsa",
+    "faq": "Gaaffilee",
+    "about": "Waa'ee",
+    "contact": "Nu qunnamaa",
+    "privacy": "Iccitii",
+    "terms": "Haala"
+  }
+}

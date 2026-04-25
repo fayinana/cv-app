@@ -1,25 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { fail, ok } from "@/lib/api-response";
+import { getOrCreateCurrentUserProfile } from "@/lib/server/profile";
 
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return fail("UNAUTHORIZED", "Not authenticated", 401);
+  const ensured = await getOrCreateCurrentUserProfile();
+  if (!ensured.ok) {
+    const status = ensured.message === "Unauthorized" ? 401 : 500;
+    return fail(status === 401 ? "UNAUTHORIZED" : "INTERNAL_ERROR", ensured.message, status);
   }
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    return fail("INTERNAL_ERROR", error.message, 500);
-  }
-
-  return ok(data);
+  return ok(ensured.profile);
 }

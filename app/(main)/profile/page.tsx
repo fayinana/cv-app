@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { updateProfileAction } from "@/app/actions/profile";
-import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getOrCreateCurrentUserProfile } from "@/lib/server/profile";
 
 export default async function ProfilePage() {
   if (!isSupabaseConfigured) {
@@ -15,24 +15,17 @@ export default async function ProfilePage() {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const ensured = await getOrCreateCurrentUserProfile();
+  if (!ensured.ok) {
     redirect("/login");
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const profile = ensured.ok ? ensured.profile : null;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl p-8">
-      <h1 className="mb-6 text-2xl font-bold">Profile</h1>
+    <main className="app-page min-h-screen bg-background text-foreground">
+      <div className="mx-auto w-full max-w-4xl p-6 md:p-8">
+      <h1 className="mb-2 text-4xl font-bold tracking-tight">Your <span className="text-display font-serif italic">Profile</span></h1>
+      <p className="mb-6 text-muted-foreground">Manage your identity details and keep your profile up to date.</p>
       <form
         action={async (formData) => {
           "use server";
@@ -44,44 +37,45 @@ export default async function ProfilePage() {
             phone: String(formData.get("phone") ?? ""),
           });
         }}
-        className="space-y-3 rounded border p-4"
+        className="space-y-4 rounded-2xl border border-border bg-card/80 p-6 shadow-sm"
       >
         <input
           name="full_name"
           defaultValue={profile?.full_name ?? ""}
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-xl border border-input bg-muted/40 px-3 py-2"
           placeholder="Full name"
           required
         />
         <input
           name="title"
           defaultValue={profile?.title ?? ""}
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-xl border border-input bg-muted/40 px-3 py-2"
           placeholder="Title"
         />
         <input
           name="location"
           defaultValue={profile?.location ?? ""}
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-xl border border-input bg-muted/40 px-3 py-2"
           placeholder="Location"
         />
         <textarea
           name="bio"
           defaultValue={profile?.bio ?? ""}
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-xl border border-input bg-muted/40 px-3 py-2"
           placeholder="Bio"
           rows={4}
         />
         <input
           name="phone"
           defaultValue={profile?.phone ?? ""}
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-xl border border-input bg-muted/40 px-3 py-2"
           placeholder="Phone"
         />
-        <button className="rounded bg-black px-4 py-2 text-white" type="submit">
+        <button className="rounded-full bg-primary px-5 py-2.5 text-primary-foreground" type="submit">
           Save
         </button>
       </form>
+      </div>
     </main>
   );
 }

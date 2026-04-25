@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AppNav } from "@/components/layout/app-nav";
+import { ThemeProvider } from "@/components/theme-provider";
+import { I18nProvider } from "@/components/providers/i18n-provider";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -9,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "CVSmart",
-  description: "CVSmart Next 14 migration app",
+  description: "AI-powered resume analysis",
 };
 
 export default function RootLayout({
@@ -18,13 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.className} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <AppNav />
-        {children}
+    <html lang="en" suppressHydrationWarning className={inter.className}>
+      <body className="min-h-full flex flex-col antialiased">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <I18nProvider>
+            {children}
+            <Toaster richColors position="top-center" closeButton />
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

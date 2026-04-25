@@ -1,67 +1,77 @@
 "use client";
 
+import type React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "../ui/button";
+import { Label } from "../ui/Label";
+import { Input } from "../ui/Input";
+import { PasswordInput } from "../ui/password-input";
 
-export function SignupForm() {
+const inputClass =
+  "bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring rounded-xl h-11";
+
+export default function SignupForm() {
   const supabase = createClient();
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
 
-    const origin = window.location.origin;
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${origin}/auth/callback`,
-      },
-    });
-
-    setLoading(false);
-    if (signUpError) {
-      setError(signUpError.message);
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      setLoading(false);
       return;
     }
 
-    router.push("/login");
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("We sent you a confirmation link.");
+    } catch (err) {
+      toast.error("An unexpected error occurred.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 rounded border p-4">
-      <h2 className="text-lg font-semibold">Create account</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        required
-        className="w-full rounded border px-3 py-2"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        required
-        className="w-full rounded border px-3 py-2"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded bg-black px-4 py-2 text-white disabled:opacity-60"
-      >
-        {loading ? "Creating..." : "Sign up"}
-      </button>
+    <form onSubmit={handleSignup} className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="signup-email" className="text-foreground">Email</Label>
+        <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className={inputClass} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="signup-password" className="text-foreground">Password</Label>
+        <PasswordInput id="signup-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" required className={inputClass} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="signup-confirm" className="text-foreground">Confirm password</Label>
+        <PasswordInput id="signup-confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat your password" required className={inputClass} />
+      </div>
+      <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-medium">
+        {loading ? "Creating account…" : "Create account"}
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link href="/login" className="text-primary font-medium hover:underline">Sign in</Link>
+      </p>
     </form>
   );
 }

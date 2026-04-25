@@ -31,13 +31,15 @@ export async function updateProfileAction(input: unknown) {
     return { ok: false, message: "Unauthorized" };
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      user_id: user.id,
+      email: user.email ?? null,
       ...parsed.data,
       updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
     return { ok: false, message: error.message };

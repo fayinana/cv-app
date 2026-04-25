@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "brand": "CVSmart",
+    "features": "Features",
+    "howItWorks": "How It Works",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Log out",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "buildCv": "Build CV",
+    "analyze": "Analyze"
+  },
+  "home": {
+    "heroTitle1": "Your Resume,",
+    "heroTitle2": "Supercharged",
+    "heroSubtitle": "Our AI analyzes your resume, identifies weaknesses, and provides actionable suggestions to help you land your dream job.",
+    "analyzeMyResume": "Analyze My Resume",
+    "seeHowItWorks": "See How It Works",
+    "aiPowered": "AI-Powered Analysis",
+    "atsOptimization": "ATS Optimization",
+    "actionableSuggestions": "Actionable Suggestions",
+    "keyFeatures": "Key Features",
+    "unlockPower": "Unlock the Power of",
+    "aiDrivenAnalysis": "AI-Driven Analysis",
+    "aiPoweredTitle": "AI-Powered Analysis",
+    "aiPoweredDesc": "Our advanced AI scans your resume and provides detailed feedback on content, structure, and formatting.",
+    "atsTitle": "ATS Optimization",
+    "atsDesc": "Ensure your resume gets past Applicant Tracking Systems with our specialized optimization tools.",
+    "actionableTitle": "Actionable Suggestions",
+    "actionableDesc": "Receive specific, step-by-step recommendations to strengthen your resume and increase interview chances.",
+    "learnMore": "Learn more"
+  },
+  "footer": {
+    "allRightsReserved": "All rights reserved.",
+    "tagline": "CVSmart uses advanced artificial intelligence to analyze resumes and provide actionable insights to help job seekers land more interviews.",
+    "product": "Product",
+    "teamDetails": "Team Details",
+    "features": "Features",
+    "faq": "FAQ",
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  }
+}
