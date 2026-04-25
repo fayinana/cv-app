@@ -1,25 +1,26 @@
 import { env } from "@/lib/env";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
-function extractText(payload: unknown): string {
-  if (!payload || typeof payload !== "object") return "";
-  const obj = payload as Record<string, unknown>;
-  const candidates = Array.isArray(obj.candidates)
-    ? (obj.candidates as Array<Record<string, unknown>>)
-    : [];
-  const first = candidates[0];
-  if (!first || typeof first !== "object") return "";
-  const content = first.content as Record<string, unknown> | undefined;
-  if (!content || !Array.isArray(content.parts)) return "";
-  const textPart = content.parts.find(
-    (part) =>
-      typeof part === "object" &&
-      part &&
-      typeof (part as Record<string, unknown>).text === "string"
-  ) as Record<string, unknown> | undefined;
-  return (textPart?.text as string) ?? "";
+function parseJsonFromText<T>(text: string): T | null {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+  if (!cleaned) return null;
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+
+  const jsonText = cleaned.slice(start, end + 1);
+  try {
+    return JSON.parse(jsonText) as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function generateJsonWithGemini<T>(
@@ -31,28 +32,22 @@ export async function generateJsonWithGemini<T>(
   }
 
   try {
-    const response = await fetch(`${GEMINI_URL}?key=${env.GOOGLE_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_mime_type: "application/json",
-          temperature: 0.3,
-        },
-      }),
-      cache: "no-store",
+    const genAI = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
     });
 
-    if (!response.ok) {
-      return fallback;
-    }
+    const response = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.3,
+        responseMimeType: "application/json",
+      },
+    });
 
-    const payload = (await response.json()) as unknown;
-    const text = extractText(payload).trim();
-    if (!text) return fallback;
-
-    return JSON.parse(text) as T;
+    const text = response.response.text();
+    const parsed = parseJsonFromText<T>(text);
+    return parsed ?? fallback;
   } catch {
     return fallback;
   }
