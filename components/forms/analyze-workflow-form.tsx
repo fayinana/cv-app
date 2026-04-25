@@ -45,6 +45,13 @@ type JobRecommendation = {
   source?: string;
 };
 
+type QuizQuestion = {
+  question: string;
+  options: { A: string; B: string; C: string; D: string };
+  correct: "A" | "B" | "C" | "D";
+  explanation: string;
+};
+
 type AnalyzeState = {
   step: Step;
   status: Status;
@@ -180,6 +187,10 @@ export function AnalyzeWorkflowForm() {
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobsSearchQuery, setJobsSearchQuery] = useState("");
   const [jobsWarning, setJobsWarning] = useState<string | null>(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, "A" | "B" | "C" | "D">>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [resumeFile, setResumeFile] = useReducer(
     (_: File | null, next: File | null) => next,
     null
@@ -316,6 +327,49 @@ export function AnalyzeWorkflowForm() {
       setJobsLoading(false);
     }
   };
+
+  const generateInterviewQuiz = async () => {
+    if (!state.jobDescription.trim() || state.jobDescription.trim().length < 20) {
+      toast.error("Add a job description first.");
+      return;
+    }
+    setQuizLoading(true);
+    setQuizSubmitted(false);
+    setQuizAnswers({});
+    try {
+      const formData = new FormData();
+      formData.append("jobDescription", state.jobDescription.trim());
+      if (resumeFile) {
+        formData.append("resume", resumeFile);
+      }
+      const response = await fetch("/api/assess/generate", { method: "POST", body: formData });
+      const payload = (await response.json()) as {
+        data?: { questions?: QuizQuestion[] };
+        error?: { message?: string };
+      };
+      if (!response.ok || payload.error) {
+        throw new Error(payload.error?.message || "Failed to generate interview quiz.");
+      }
+      const questions = payload.data?.questions ?? [];
+      setQuizQuestions(questions);
+      if (!questions.length) {
+        toast.info("No quiz questions generated yet. Try again.");
+      } else {
+        toast.success("Interview prep quiz is ready.");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate quiz.";
+      toast.error(message);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
+  const quizScore = quizSubmitted
+    ? quizQuestions.reduce((score, question, index) => {
+        return quizAnswers[index] === question.correct ? score + 1 : score;
+      }, 0)
+    : 0;
 
   const stepMeta: Array<{ id: Step; label: string }> = [
     { id: 1, label: "Upload CV" },
@@ -696,13 +750,110 @@ export function AnalyzeWorkflowForm() {
                       </div>
                       <div>
                         <p className="font-semibold">Interview prep quiz</p>
-                        <p className="text-xs text-muted-foreground">We will build this next, after jobs.</p>
+                        <p className="text-xs text-muted-foreground">
+                          Generate practice interview questions from your target role.
+                        </p>
                       </div>
                     </div>
-                    <Button disabled className="w-full rounded-lg">
-                      Coming next
+                    <Button
+                      onClick={generateInterviewQuiz}
+                      disabled={quizLoading || !state.jobDescription.trim()}
+                      className="w-full rounded-lg"
+                    >
+                      {quizLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating questions...
+                        </>
+                      ) : (
+                        "Generate practice questions"
+                      )}
                     </Button>
                   </div>
+
+                  {quizQuestions.length ? (
+                    <div className="rounded-xl border border-border bg-card/60 p-5">
+                      <p className="mb-4 font-semibold text-foreground">Interview Practice Quiz</p>
+                      <div className="max-h-[520px] space-y-5 overflow-y-auto pr-1">
+                        {quizQuestions.map((q, idx) => (
+                          <div key={`${q.question}-${idx}`} className="rounded-lg border border-border bg-background/40 p-4">
+                            <p className="mb-3 text-sm font-medium text-foreground">
+                              {idx + 1}. {q.question}
+                            </p>
+                            <div className="space-y-2">
+                              {(["A", "B", "C", "D"] as const).map((option) => {
+                                const selected = quizAnswers[idx] === option;
+                                const correct = q.correct === option;
+                                const showCorrect = quizSubmitted && correct;
+                                const showWrong = quizSubmitted && selected && !correct;
+                                return (
+                                  <label
+                                    key={option}
+                                    className={`flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm transition ${
+                                      showCorrect
+                                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                                        : showWrong
+                                          ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                                          : selected
+                                            ? "border-primary/50 bg-primary/10"
+                                            : "border-border bg-background/20 hover:bg-muted/40"
+                                    }`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`quiz-${idx}`}
+                                      checked={selected}
+                                      onChange={() =>
+                                        !quizSubmitted &&
+                                        setQuizAnswers((prev) => ({ ...prev, [idx]: option }))
+                                      }
+                                      className="mt-0.5"
+                                    />
+                                    <span>
+                                      <span className="mr-1 font-semibold">{option}.</span>
+                                      {q.options[option]}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            {quizSubmitted ? (
+                              <p className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                                {q.explanation}
+                              </p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        {!quizSubmitted ? (
+                          <Button
+                            onClick={() => setQuizSubmitted(true)}
+                            className="rounded-lg"
+                            disabled={Object.keys(quizAnswers).length < quizQuestions.length}
+                          >
+                            Submit answers
+                          </Button>
+                        ) : (
+                          <>
+                            <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+                              Score: {quizScore} / {quizQuestions.length}
+                            </p>
+                            <Button
+                              variant="outline"
+                              className="rounded-lg"
+                              onClick={() => {
+                                setQuizSubmitted(false);
+                                setQuizAnswers({});
+                              }}
+                            >
+                              Retake
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </>
@@ -735,6 +886,9 @@ export function AnalyzeWorkflowForm() {
                 setJobs([]);
                 setJobsSearchQuery("");
                 setJobsWarning(null);
+                setQuizQuestions([]);
+                setQuizAnswers({});
+                setQuizSubmitted(false);
                 setResumeFile(null);
                 if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE_KEY);
                 toast.success("Analysis draft cleared.");

@@ -65,19 +65,30 @@ async function extractPdfWithPdf2Json(buffer: Buffer): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
     const parser = new PDFParser(null, true);
     const originalWarn = console.warn;
-    console.warn = (...args: unknown[]) => {
+    const originalLog = console.log;
+    const shouldSilence = (args: unknown[]) => {
       const first = String(args[0] ?? "");
-      if (
+      return (
         first.includes("NOT valid form element") ||
         first.includes("Unsupported: field.type of Link") ||
         first.includes("Setting up fake worker")
-      ) {
+      );
+    };
+    console.warn = (...args: unknown[]) => {
+      if (shouldSilence(args)) {
         return;
       }
       originalWarn(...args);
     };
+    console.log = (...args: unknown[]) => {
+      if (shouldSilence(args)) {
+        return;
+      }
+      originalLog(...args);
+    };
     const restoreWarn = () => {
       console.warn = originalWarn;
+      console.log = originalLog;
     };
     parser.on("pdfParser_dataError", (errData: { parserError?: string }) => {
       restoreWarn();
