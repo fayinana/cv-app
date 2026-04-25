@@ -64,7 +64,23 @@ async function extractPdfWithPdf2Json(buffer: Buffer): Promise<string> {
   const PDFParser = require("pdf2json");
   return await new Promise<string>((resolve, reject) => {
     const parser = new PDFParser(null, true);
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      const first = String(args[0] ?? "");
+      if (
+        first.includes("NOT valid form element") ||
+        first.includes("Unsupported: field.type of Link") ||
+        first.includes("Setting up fake worker")
+      ) {
+        return;
+      }
+      originalWarn(...args);
+    };
+    const restoreWarn = () => {
+      console.warn = originalWarn;
+    };
     parser.on("pdfParser_dataError", (errData: { parserError?: string }) => {
+      restoreWarn();
       reject(new Error(errData?.parserError || "Failed to parse PDF."));
     });
     parser.on("pdfParser_dataReady", (pdfData: any) => {
@@ -82,8 +98,10 @@ async function extractPdfWithPdf2Json(buffer: Buffer): Promise<string> {
             }
           }
         }
+        restoreWarn();
         resolve(lines.join(" "));
       } catch {
+        restoreWarn();
         reject(new Error("Failed to extract PDF text segments."));
       }
     });

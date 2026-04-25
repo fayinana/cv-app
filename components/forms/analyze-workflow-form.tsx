@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
+  Briefcase,
   Check,
-  FileText,
+  ExternalLink,
   Loader2,
+  MapPin,
   RotateCcw,
   Search,
   Sparkles,
@@ -32,6 +34,15 @@ type AnalyzeResult = {
     gaps: string[];
   };
   analysis: string;
+};
+
+type JobRecommendation = {
+  title: string;
+  company: string;
+  location: string;
+  link: string;
+  snippet: string;
+  source?: string;
 };
 
 type AnalyzeState = {
@@ -165,6 +176,10 @@ function MiniBar({ score, color }: { score: number; color: string }) {
 export function AnalyzeWorkflowForm() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [activeTab, setActiveTab] = useState<"overview" | "breakdown" | "actions">("overview");
+  const [jobs, setJobs] = useState<JobRecommendation[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsSearchQuery, setJobsSearchQuery] = useState("");
+  const [jobsWarning, setJobsWarning] = useState<string | null>(null);
   const [resumeFile, setResumeFile] = useReducer(
     (_: File | null, next: File | null) => next,
     null
@@ -261,6 +276,44 @@ export function AnalyzeWorkflowForm() {
       toast.error(message);
     } finally {
       window.clearInterval(timer);
+    }
+  };
+
+  const loadJobRecommendations = async () => {
+    if (!resumeFile || !state.jobDescription.trim()) {
+      toast.error("Upload resume and job description first.");
+      return;
+    }
+    setJobsLoading(true);
+    setJobsWarning(null);
+    try {
+      const formData = new FormData();
+      formData.append("resume", resumeFile);
+      formData.append("jobDescription", state.jobDescription.trim());
+      formData.append("location", "Ethiopia");
+      const response = await fetch("/api/jobs/recommend", { method: "POST", body: formData });
+      const payload = (await response.json()) as {
+        data?: { jobs?: JobRecommendation[]; searchQuery?: string; warning?: string };
+        error?: { message?: string };
+      };
+      if (!response.ok || payload.error) {
+        throw new Error(payload.error?.message || "Failed to load recommendations.");
+      }
+      const list = payload.data?.jobs ?? [];
+      setJobs(list);
+      setJobsSearchQuery(payload.data?.searchQuery ?? "");
+      setJobsWarning(payload.data?.warning ?? null);
+      if (!list.length) {
+        toast.info("No jobs found for this profile yet.");
+      } else {
+        toast.success("Job recommendations ready.");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load recommendations.";
+      setJobsWarning(message);
+      toast.error(message);
+    } finally {
+      setJobsLoading(false);
     }
   };
 
@@ -564,7 +617,7 @@ export function AnalyzeWorkflowForm() {
               ) : null}
 
               {activeTab === "actions" ? (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-4">
                   <div className="rounded-xl border border-border bg-card/60 p-5">
                     <div className="mb-3 flex items-center gap-2">
                       <div className="rounded-lg border border-violet-500/30 bg-violet-500/15 p-2">
@@ -572,13 +625,70 @@ export function AnalyzeWorkflowForm() {
                       </div>
                       <div>
                         <p className="font-semibold">Get job recommendations</p>
-                        <p className="text-xs text-muted-foreground">We will add this in the next step.</p>
+                        <p className="text-xs text-muted-foreground">
+                          Personalized roles based on your CV and this job description.
+                        </p>
                       </div>
                     </div>
-                    <Button disabled className="w-full rounded-lg">
-                      Coming next
+                    <Button onClick={loadJobRecommendations} disabled={jobsLoading} className="w-full rounded-lg">
+                      {jobsLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Finding jobs...
+                        </>
+                      ) : (
+                        "Find recommendations"
+                      )}
                     </Button>
+                    {jobsSearchQuery ? (
+                      <p className="mt-3 text-xs text-muted-foreground">Search query: {jobsSearchQuery}</p>
+                    ) : null}
+                    {jobsWarning ? (
+                      <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                        {jobsWarning}
+                      </p>
+                    ) : null}
                   </div>
+
+                  {jobs.length ? (
+                    <div className="rounded-xl border border-border bg-card/60 p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-violet-400" />
+                        <p className="font-semibold">Recommended jobs</p>
+                      </div>
+                      <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                        {jobs.map((job, idx) => (
+                          <div key={`${job.link}-${idx}`} className="rounded-lg border border-border bg-background/40 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">{job.title}</p>
+                                <p className="truncate text-xs text-muted-foreground">{job.company}</p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                                  <MapPin className="h-3 w-3" />
+                                  {job.location || "Location not specified"}
+                                </p>
+                              </div>
+                              <a
+                                href={job.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-full border border-violet-500/40 bg-violet-500/20 p-2 text-violet-300 hover:bg-violet-500/30"
+                                aria-label={`Open ${job.title}`}
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            </div>
+                            {job.snippet ? (
+                              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                                {job.snippet}
+                              </p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="rounded-xl border border-border bg-card/60 p-5">
                     <div className="mb-3 flex items-center gap-2">
                       <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/15 p-2">
@@ -586,7 +696,7 @@ export function AnalyzeWorkflowForm() {
                       </div>
                       <div>
                         <p className="font-semibold">Interview prep quiz</p>
-                        <p className="text-xs text-muted-foreground">We will add this right after jobs.</p>
+                        <p className="text-xs text-muted-foreground">We will build this next, after jobs.</p>
                       </div>
                     </div>
                     <Button disabled className="w-full rounded-lg">
@@ -622,6 +732,9 @@ export function AnalyzeWorkflowForm() {
               onClick={() => {
                 dispatch({ type: "RESET_ALL" });
                 setActiveTab("overview");
+                setJobs([]);
+                setJobsSearchQuery("");
+                setJobsWarning(null);
                 setResumeFile(null);
                 if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE_KEY);
                 toast.success("Analysis draft cleared.");
