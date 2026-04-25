@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { Sparkles, LogOut, LayoutDashboard, User, Settings, Menu, X } from "lucide-react";
@@ -14,6 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
 
+const AVATAR_UPDATED_EVENT = "cvsmart:avatar-updated";
+
 export function MainNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -23,7 +25,7 @@ export function MainNav() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -37,13 +39,32 @@ export function MainNav() {
         if (cancelled) return;
         setIsSignedIn(!!session);
         setUserEmail(session?.user?.email ?? null);
-        setAvatarUrl((session?.user?.user_metadata?.avatar_url as string) ?? null);
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+          setAvatarUrl(profile?.avatar_url ?? (session.user.user_metadata?.avatar_url as string) ?? null);
+        } else {
+          setAvatarUrl((session?.user?.user_metadata?.avatar_url as string) ?? null);
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, [supabase.auth]);
+
+    const onAvatarUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ url?: string | null }>;
+      setAvatarUrl(customEvent.detail?.url ?? null);
+    };
+    window.addEventListener(AVATAR_UPDATED_EVENT, onAvatarUpdated);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener(AVATAR_UPDATED_EVENT, onAvatarUpdated);
+    };
+  }, [supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
