@@ -235,7 +235,19 @@ export function AnalyzeWorkflowForm() {
       formData.append("resume", resumeFile);
       formData.append("jobDescription", state.jobDescription.trim());
       const response = await fetch("/api/analyze", { method: "POST", body: formData });
-      const payload = (await response.json()) as { data?: AnalyzeResult; error?: { message?: string } };
+      let payload: { data?: AnalyzeResult; error?: { message?: string } } | null = null;
+      const responseType = response.headers.get("content-type") || "";
+      if (responseType.includes("application/json")) {
+        payload = (await response.json()) as { data?: AnalyzeResult; error?: { message?: string } };
+      } else {
+        const nonJsonBody = await response.text();
+        throw new Error(
+          nonJsonBody.includes("<!DOCTYPE")
+            ? "Server returned an unexpected HTML response. Please refresh and try again."
+            : "Server returned an unexpected response format."
+        );
+      }
+
       if (!response.ok || payload.error || !payload.data) {
         throw new Error(payload.error?.message || "Analysis failed.");
       }

@@ -1,6 +1,7 @@
 import { analyzeRequestSchema } from "@/lib/contracts";
 import { fail, ok } from "@/lib/api-response";
 import { analyzeResume } from "@/lib/logic/analysis";
+import { extractResumeText } from "@/lib/server/resume-extractor";
 
 export async function POST(req: Request) {
   try {
@@ -14,7 +15,17 @@ export async function POST(req: Request) {
       if (!(resume instanceof File)) {
         return fail("BAD_REQUEST", "Resume file is required", 400);
       }
-      const resumeText = (await resume.text()).trim();
+      let resumeText = "";
+      try {
+        const extracted = await extractResumeText(resume);
+        resumeText = extracted.text;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to read resume file. Please upload PDF, DOCX, or TXT.";
+        return fail("BAD_REQUEST", message, 400);
+      }
       payload = { jobDescription, resumeText };
     } else {
       const body = await req.json();
