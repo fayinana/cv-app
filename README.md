@@ -26,7 +26,7 @@ A modern Next.js application that helps job seekers optimize their resumes using
 
 - Node.js 18+ installed
 - A Supabase account ([sign up here](https://supabase.com))
-- Google AI API key (optional, for enhanced analysis)
+- Google AI API key 
 
 ## Getting Started
 
