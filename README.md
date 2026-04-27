@@ -145,8 +145,8 @@ npm run lint     # Run ESLint
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key |
-| `GOOGLE_API_KEY` | No | Google Gemini API key for AI analysis |
-| `SERPAPI_API_KEY` | No | SerpAPI key for job recommendations |
+| `GOOGLE_API_KEY` | Yes | Google Gemini API key for AI analysis |
+| `SERPAPI_API_KEY` | Yes | SerpAPI key for job recommendations |
 
 ## Troubleshooting
 
