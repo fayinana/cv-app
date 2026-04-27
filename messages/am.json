@@ -182,7 +182,9 @@
       "cvGenerated": "የተሻሻለ CV ረቂቅ ተፈጥሯል።",
       "pdfStarted": "PDF ማውጣት ተጀምሯል።",
       "docxStarted": "DOCX ማውጣት ተጀምሯል።",
-      "draftCleared": "የትንታኔ ረቂቅ ተጠርጓል።"
+      "draftCleared": "የትንታኔ ረቂቅ ተጠርጓል።",
+      "languageChanged": "ቋንቋው ተቀይሯል። ውጤቶችን በተመረጠው ቋንቋ ለማመንጨት ትንታኔውን እንደገና ያሂዱ።",
+      "draftExpired": "የተቀመጠው የትንታኔ ረቂቅ ጊዜው አልፏል። ለመቀጠል አዲስ ትንታኔ ይጀምሩ።"
     },
     "errors": {
       "unexpectedHtml": "አገልጋዩ ያልተጠበቀ HTML መልስ መለሰ። እባክዎ ያድሱ እና እንደገና ይሞክሩ።",

@@ -182,7 +182,9 @@
       "cvGenerated": "Improved CV draft generated.",
       "pdfStarted": "PDF export started.",
       "docxStarted": "DOCX export started.",
-      "draftCleared": "Analysis draft cleared."
+      "draftCleared": "Analysis draft cleared.",
+      "languageChanged": "Language changed. Run the analysis again to generate results in the selected language.",
+      "draftExpired": "Your saved analysis draft expired. Start a new analysis to continue."
     },
     "errors": {
       "unexpectedHtml": "Server returned an unexpected HTML response. Please refresh and try again.",

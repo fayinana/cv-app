@@ -182,7 +182,9 @@
       "cvGenerated": "Draft CV fooyya'e uumameera.",
       "pdfStarted": "Baasuun PDF jalqabameera.",
       "docxStarted": "Baasuun DOCX jalqabameera.",
-      "draftCleared": "Draft xiinxalaa haqameera."
+      "draftCleared": "Draft xiinxalaa haqameera.",
+      "languageChanged": "Afaan jijjiirameera. Bu'aa afaan filatameen uumuuf xiinxala irra deebi'i geggeessi.",
+      "draftExpired": "Draft xiinxalaa kuufame yeroon isaa darbeera. Itti fufuuf xiinxala haaraa jalqabi."
     },
     "errors": {
       "unexpectedHtml": "Server deebii HTML hin eegamne deebise. Maaloo haaromsiitii irra deebi'i yaali.",

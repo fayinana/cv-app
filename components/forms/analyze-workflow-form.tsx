@@ -30,6 +30,7 @@ import { postJson } from "@/lib/fetchers";
 import { exportElementToPdf } from "@/lib/pdf-export";
 import { exportCvDataToDocx } from "@/lib/docx-export";
 import { TEMPLATE_MAP, type CVData, type TemplateId } from "@/components/cv-templates";
+import { useLocaleSwitch } from "@/components/providers/i18n-provider";
 
 type Step = 1 | 2 | 3;
 type Status = "idle" | "running" | "success" | "error";
@@ -42,7 +43,18 @@ type AnalyzeResult = {
     gaps: string[];
   };
   analysis: string;
+  localized?: Record<"en" | "am" | "om", {
+    structured: {
+      overallScore: number;
+      verdict: string;
+      strengths: string[];
+      gaps: string[];
+    };
+    analysis: string;
+  }>;
 };
+
+type SingleAnalyzeResult = Omit<AnalyzeResult, "localized">;
 
 type JobRecommendation = {
   title: string;
@@ -71,7 +83,17 @@ type AnalyzeState = {
   result: AnalyzeResult | null;
   error: string | null;
   restoredNotice: string | null;
+  locale: "en" | "am" | "om";
 };
+
+type PersistedAnalyzeDraft =
+  | AnalyzeState
+  | {
+      version: 2;
+      savedAt: number;
+      expiresAt: number;
+      state: AnalyzeState;
+    };
 
 type Action =
   | { type: "SET_STEP"; payload: Step }
@@ -79,13 +101,16 @@ type Action =
   | { type: "SET_JOB"; payload: string }
   | { type: "RUN_START" }
   | { type: "RUN_PROGRESS"; payload: number }
-  | { type: "RUN_SUCCESS"; payload: AnalyzeResult }
+  | { type: "RUN_SUCCESS"; payload: { result: AnalyzeResult; locale: "en" | "am" | "om" } }
   | { type: "RUN_ERROR"; payload: string }
   | { type: "RESTORE"; payload: AnalyzeState }
   | { type: "CLEAR_NOTICE" }
+  | { type: "SET_LOCALE"; payload: "en" | "am" | "om" }
+  | { type: "CLEAR_LOCALIZED_OUTPUT"; payload: "en" | "am" | "om" }
   | { type: "RESET_ALL" };
 
 const STORAGE_KEY = "cvsmart.analysis.workflow.v1";
+const DRAFT_TTL_MS = 30 * 60 * 1000;
 const RESUME_EXTENSIONS = [".pdf", ".docx", ".txt"];
 const MAX_RESUME_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const A4_WIDTH_PX = 794;
@@ -100,6 +125,7 @@ const initialState: AnalyzeState = {
   result: null,
   error: null,
   restoredNotice: null,
+  locale: "en",
 };
 
 function reducer(state: AnalyzeState, action: Action): AnalyzeState {
@@ -115,13 +141,26 @@ function reducer(state: AnalyzeState, action: Action): AnalyzeState {
     case "RUN_PROGRESS":
       return { ...state, progress: Math.min(95, action.payload) };
     case "RUN_SUCCESS":
-      return { ...state, status: "success", progress: 100, result: action.payload, error: null, step: 3 };
+      return { ...state, status: "success", progress: 100, result: action.payload.result, error: null, step: 3, locale: action.payload.locale };
     case "RUN_ERROR":
       return { ...state, status: "error", progress: 0, error: action.payload, step: 3 };
     case "RESTORE":
       return action.payload;
     case "CLEAR_NOTICE":
       return { ...state, restoredNotice: null };
+    case "SET_LOCALE":
+      return { ...state, locale: action.payload };
+    case "CLEAR_LOCALIZED_OUTPUT":
+      return {
+        ...state,
+        step: 1,
+        status: "idle",
+        progress: 0,
+        result: null,
+        error: null,
+        restoredNotice: null,
+        locale: action.payload,
+      };
     case "RESET_ALL":
       return initialState;
     default:
@@ -129,22 +168,47 @@ function reducer(state: AnalyzeState, action: Action): AnalyzeState {
   }
 }
 
-function readPersistedState(copy: { interrupted: string; recovered: string }): AnalyzeState | null {
+function readPersistedState(
+  copy: { interrupted: string; recovered: string; expired: string },
+  currentLocale: "en" | "am" | "om"
+): AnalyzeState | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as AnalyzeState;
-    if (parsed.status === "running") {
+    const parsed = JSON.parse(raw) as PersistedAnalyzeDraft;
+    const now = Date.now();
+    const isEnvelope = "state" in parsed && "expiresAt" in parsed;
+    const draftState = isEnvelope ? parsed.state : parsed;
+    const expiresAt = isEnvelope ? parsed.expiresAt : now + DRAFT_TTL_MS;
+
+    if (Number.isFinite(expiresAt) && expiresAt <= now) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      toast.info(copy.expired);
+      return null;
+    }
+
+    const hasLocaleResult = Boolean(draftState.result?.localized?.[currentLocale]);
+    if (draftState.locale && draftState.locale !== currentLocale && !hasLocaleResult) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    const stateForLocale = {
+      ...draftState,
+      step: 1 as Step,
+      resumeFileName: null,
+      locale: draftState.locale ?? currentLocale,
+    };
+    if (draftState.status === "running") {
       return {
-        ...parsed,
+        ...stateForLocale,
         status: "error",
         progress: 0,
         error: copy.interrupted,
         restoredNotice: copy.recovered,
       };
     }
-    return { ...parsed, restoredNotice: copy.recovered };
+    return { ...stateForLocale, restoredNotice: copy.recovered };
   } catch {
     return null;
   }
@@ -169,6 +233,15 @@ function getResumeFileError(file: File, copy: { invalidType: string; tooLarge: s
 
 function templateLabel(templateId: TemplateId, labels: Record<TemplateId, string>) {
   return labels[templateId];
+}
+
+function hasPersistableDraft(state: AnalyzeState) {
+  return Boolean(
+    state.jobDescription.trim() ||
+      state.result ||
+      state.status === "running" ||
+      state.status === "error"
+  );
 }
 
 function ScoreRing({ score, label }: { score: number; label: string }) {
@@ -211,6 +284,7 @@ function MiniBar({ score, color }: { score: number; color: string }) {
 
 export function AnalyzeWorkflowForm() {
   const t = useTranslations("analyze");
+  const { locale } = useLocaleSwitch();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [activeTab, setActiveTab] = useState<"overview" | "breakdown" | "actions" | "cv">("overview");
   const [jobs, setJobs] = useState<JobRecommendation[]>([]);
@@ -258,29 +332,56 @@ export function AnalyzeWorkflowForm() {
     const restored = readPersistedState({
       interrupted: t("messages.interrupted"),
       recovered: t("messages.recovered"),
-    });
+      expired: t("messages.draftExpired"),
+    }, locale);
     if (restored) {
       restoredDraftRef.current = true;
       dispatch({ type: "RESTORE", payload: restored });
       toast.info(t("messages.recoveredToast"));
     }
-  }, [t]);
+  }, [locale, t]);
+
+  useEffect(() => {
+    if (state.locale === locale) return;
+    if (state.result?.localized?.[locale] || !state.result) {
+      dispatch({ type: "SET_LOCALE", payload: locale });
+      return;
+    }
+
+    dispatch({ type: "SET_LOCALE", payload: locale });
+    toast.info(t("messages.languageChanged"));
+  }, [locale, state.locale, state.result, t]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (!hasPersistableDraft(state)) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    const savedAt = Date.now();
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 2,
+        savedAt,
+        expiresAt: savedAt + DRAFT_TTL_MS,
+        state,
+      })
+    );
   }, [state]);
 
   const canGoStep2 = Boolean(resumeFile);
   const canAnalyze = canGoStep2 && state.jobDescription.trim().length >= 20;
   const CvPreviewComponent = cvSections ? TEMPLATE_MAP[templateId] : null;
+  const activeResult: SingleAnalyzeResult | null =
+    state.result?.localized?.[locale] ?? state.result;
 
   const scoreColor = useMemo(() => {
-    const score = state.result?.structured.overallScore ?? 0;
+    const score = activeResult?.structured.overallScore ?? 0;
     if (score >= 75) return "text-emerald-400";
     if (score >= 50) return "text-amber-300";
     return "text-rose-400";
-  }, [state.result?.structured.overallScore]);
+  }, [activeResult?.structured.overallScore]);
 
   const acceptResumeFile = (file: File | null) => {
     if (!file) return;
@@ -332,6 +433,7 @@ export function AnalyzeWorkflowForm() {
       const formData = new FormData();
       formData.append("resume", resumeFile);
       formData.append("jobDescription", state.jobDescription.trim());
+      formData.append("locale", locale);
       const response = await fetch("/api/analyze", { method: "POST", body: formData });
       let payload: { data?: AnalyzeResult; error?: { message?: string } } | null = null;
       const responseType = response.headers.get("content-type") || "";
@@ -350,7 +452,7 @@ export function AnalyzeWorkflowForm() {
         throw new Error(payload.error?.message || t("errors.analysisFailed"));
       }
       const data = payload.data;
-      dispatch({ type: "RUN_SUCCESS", payload: data });
+      dispatch({ type: "RUN_SUCCESS", payload: { result: data, locale } });
       setActiveTab("overview");
       setCvSections(null);
       toast.success(t("messages.analysisComplete"));
@@ -439,19 +541,19 @@ export function AnalyzeWorkflowForm() {
   };
 
   const generateImprovedCv = async () => {
-    if (!state.result) {
+    if (!activeResult) {
       toast.error(t("validation.analysisFirst"));
       return;
     }
     setCvLoading(true);
     try {
       const analysisContext = [
-        state.result.analysis,
-        state.result.structured.strengths.length
-          ? `${t("results.strengths")}:\n${state.result.structured.strengths.map((item) => `- ${item}`).join("\n")}`
+        activeResult.analysis,
+        activeResult.structured.strengths.length
+          ? `${t("results.strengths")}:\n${activeResult.structured.strengths.map((item) => `- ${item}`).join("\n")}`
           : "",
-        state.result.structured.gaps.length
-          ? `${t("results.gapsToAddress")}:\n${state.result.structured.gaps.map((item) => `- ${item}`).join("\n")}`
+        activeResult.structured.gaps.length
+          ? `${t("results.gapsToAddress")}:\n${activeResult.structured.gaps.map((item) => `- ${item}`).join("\n")}`
           : "",
       ]
         .filter(Boolean)
@@ -522,7 +624,7 @@ export function AnalyzeWorkflowForm() {
   const completedThrough =
     state.step === 3 ? (state.status === "success" ? 3 : 2) : state.step === 2 ? 1 : 0;
   const sectionItems = useMemo(() => {
-    const result = state.result?.structured;
+    const result = activeResult?.structured;
     if (!result) return [];
     const overall = Math.max(0, Math.min(100, result.overallScore));
     return [
@@ -555,7 +657,7 @@ export function AnalyzeWorkflowForm() {
         details: result.gaps.slice(0, 2).length ? result.gaps.slice(0, 2) : [t("results.communicationFallback")],
       },
     ];
-  }, [state.result, t]);
+  }, [activeResult, t]);
 
   return (
     <div className="space-y-8">
@@ -649,8 +751,8 @@ export function AnalyzeWorkflowForm() {
                 <Upload className="h-6 w-6 text-muted-foreground" />
               </span>
               <p className="text-sm font-medium text-foreground">
-                {state.resumeFileName
-                  ? state.resumeFileName
+                {resumeFile
+                  ? resumeFile.name
                   : isDraggingResume
                     ? t("upload.dropHere")
                     : t("upload.prompt")}
@@ -659,7 +761,7 @@ export function AnalyzeWorkflowForm() {
             </label>
             <div className="flex justify-between">
               <p className="text-xs text-muted-foreground">
-                {state.resumeFileName ? t("upload.ready") : t("upload.empty")}
+                {resumeFile ? t("upload.ready") : t("upload.empty")}
               </p>
               <Button
                 type="button"
@@ -738,20 +840,20 @@ export function AnalyzeWorkflowForm() {
             </div>
           ) : null}
 
-          {state.result ? (
+          {activeResult ? (
             <>
               <div className="grid gap-4 md:grid-cols-[1fr_220px]">
                 <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm">
                   <p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">{t("results.applyingFor")}</p>
                   <h3 className="text-2xl font-semibold text-foreground">{t("job.title")}</h3>
                   <p className={`mt-3 inline-flex rounded-lg border px-3 py-1.5 text-sm font-semibold ${scoreColor}`}>
-                    {state.result.structured.verdict}
+                    {activeResult.structured.verdict}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm">
                   <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{t("results.overallMatch")}</p>
                   <div className="mt-2 flex justify-center">
-                    <ScoreRing score={state.result.structured.overallScore} label={t("results.outOf100")} />
+                    <ScoreRing score={activeResult.structured.overallScore} label={t("results.outOf100")} />
                   </div>
                 </div>
               </div>
@@ -800,8 +902,8 @@ export function AnalyzeWorkflowForm() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
                       <p className="mb-3 text-xs uppercase tracking-widest text-emerald-300">{t("results.strengths")}</p>
-                      {state.result.structured.strengths.length ? (
-                        state.result.structured.strengths.map((item, idx) => (
+                      {activeResult.structured.strengths.length ? (
+                        activeResult.structured.strengths.map((item, idx) => (
                           <div key={idx} className="mb-2 flex items-start gap-2 text-sm text-emerald-200">
                             <TrendingUp className="mt-0.5 h-4 w-4 shrink-0" />
                             <span>{item}</span>
@@ -813,8 +915,8 @@ export function AnalyzeWorkflowForm() {
                     </div>
                     <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
                       <p className="mb-3 text-xs uppercase tracking-widest text-rose-300">{t("results.gaps")}</p>
-                      {state.result.structured.gaps.length ? (
-                        state.result.structured.gaps.map((item, idx) => (
+                      {activeResult.structured.gaps.length ? (
+                        activeResult.structured.gaps.map((item, idx) => (
                           <div key={idx} className="mb-2 flex items-start gap-2 text-sm text-rose-200">
                             <TrendingDown className="mt-0.5 h-4 w-4 shrink-0" />
                             <span>{item}</span>
@@ -832,7 +934,7 @@ export function AnalyzeWorkflowForm() {
                 <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm">
                   <h3 className="mb-4 text-sm font-semibold text-foreground">{t("results.fullAnalysis")}</h3>
                   <div className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                    {state.result.analysis}
+                    {activeResult.analysis}
                   </div>
                 </div>
               ) : null}
