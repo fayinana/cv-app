@@ -10,6 +10,7 @@ import {
   Check,
   Download,
   ExternalLink,
+  FileText,
   FilePlus2,
   Loader2,
   MapPin,
@@ -27,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { postJson } from "@/lib/fetchers";
 import { exportElementToPdf } from "@/lib/pdf-export";
+import { exportCvDataToDocx } from "@/lib/docx-export";
 import { TEMPLATE_MAP, type CVData, type TemplateId } from "@/components/cv-templates";
 
 type Step = 1 | 2 | 3;
@@ -224,6 +226,7 @@ export function AnalyzeWorkflowForm() {
   const [templateId, setTemplateId] = useState<TemplateId>("classic");
   const [cvLoading, setCvLoading] = useState(false);
   const [downloadingCvPdf, setDownloadingCvPdf] = useState(false);
+  const [downloadingCvDocx, setDownloadingCvDocx] = useState(false);
   const cvPreviewRef = useRef<HTMLDivElement>(null);
   const restoredDraftRef = useRef(false);
   const [resumeFile, setResumeFile] = useReducer(
@@ -240,6 +243,14 @@ export function AnalyzeWorkflowForm() {
     breakdown: t("tabs.breakdown"),
     actions: t("tabs.actions"),
     cv: t("tabs.cv"),
+  };
+  const docxLabels = {
+    candidateName: t("docx.candidateName"),
+    summary: t("docx.summary"),
+    skills: t("docx.skills"),
+    experience: t("docx.experience"),
+    education: t("docx.education"),
+    projects: t("docx.projects"),
   };
 
   useEffect(() => {
@@ -478,6 +489,22 @@ export function AnalyzeWorkflowForm() {
       toast.error(error instanceof Error ? error.message : t("errors.pdfFailed"));
     } finally {
       setDownloadingCvPdf(false);
+    }
+  };
+
+  const exportImprovedCvDocx = async () => {
+    if (!cvSections) {
+      toast.error(t("validation.cvFirst"));
+      return;
+    }
+    setDownloadingCvDocx(true);
+    try {
+      await exportCvDataToDocx(cvSections, docxLabels, "improved_cv.docx");
+      toast.success(t("messages.docxStarted"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("errors.docxFailed"));
+    } finally {
+      setDownloadingCvDocx(false);
     }
   };
 
@@ -870,6 +897,19 @@ export function AnalyzeWorkflowForm() {
                           <Download className="mr-2 h-4 w-4" />
                         )}
                         {t("cv.exportPdf")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={exportImprovedCvDocx}
+                        disabled={!cvSections || downloadingCvDocx}
+                        className="mt-2 w-full rounded-lg"
+                      >
+                        {downloadingCvDocx ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileText className="mr-2 h-4 w-4" />
+                        )}
+                        {t("cv.exportDocx")}
                       </Button>
                     </div>
                   </div>

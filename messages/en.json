@@ -127,6 +127,7 @@
       "generating": "Generating CV...",
       "template": "Template",
       "exportPdf": "Export PDF",
+      "exportDocx": "Export DOCX",
       "previewTitle": "Live CV Preview",
       "previewDescription": "Review the improved CV before exporting.",
       "ready": "Ready",
@@ -180,6 +181,7 @@
       "quizReady": "Interview prep quiz is ready.",
       "cvGenerated": "Improved CV draft generated.",
       "pdfStarted": "PDF export started.",
+      "docxStarted": "DOCX export started.",
       "draftCleared": "Analysis draft cleared."
     },
     "errors": {
@@ -189,7 +191,16 @@
       "jobsFailed": "Failed to load recommendations.",
       "quizFailed": "Failed to generate interview quiz.",
       "cvFailed": "Failed to generate improved CV.",
-      "pdfFailed": "Failed to export improved CV."
+      "pdfFailed": "Failed to export improved CV.",
+      "docxFailed": "Failed to export DOCX."
+    },
+    "docx": {
+      "candidateName": "Candidate Name",
+      "summary": "Summary",
+      "skills": "Skills",
+      "experience": "Experience",
+      "education": "Education",
+      "projects": "Projects"
     }
   },
   "loading": {

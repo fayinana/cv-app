@@ -127,6 +127,7 @@
       "generating": "CV uumamaa jira...",
       "template": "Template",
       "exportPdf": "PDF baasi",
+      "exportDocx": "DOCX baasi",
       "previewTitle": "Durargii CV",
       "previewDescription": "Osoo hin baasin dura CV fooyya'e ilaali.",
       "ready": "Qophaa'e",
@@ -180,6 +181,7 @@
       "quizReady": "Qophiin af-gaaffii qophaa'eera.",
       "cvGenerated": "Draft CV fooyya'e uumameera.",
       "pdfStarted": "Baasuun PDF jalqabameera.",
+      "docxStarted": "Baasuun DOCX jalqabameera.",
       "draftCleared": "Draft xiinxalaa haqameera."
     },
     "errors": {
@@ -189,7 +191,16 @@
       "jobsFailed": "Gorsa fe'uu hin dandeenye.",
       "quizFailed": "Gaaffilee af-gaaffii uumuu hin dandeenye.",
       "cvFailed": "CV fooyya'e uumuu hin dandeenye.",
-      "pdfFailed": "CV fooyya'e baasuuf hin milkoofne."
+      "pdfFailed": "CV fooyya'e baasuuf hin milkoofne.",
+      "docxFailed": "DOCX baasuuf hin milkoofne."
+    },
+    "docx": {
+      "candidateName": "Maqaa Kaadhimamaa",
+      "summary": "Cuunfaa",
+      "skills": "Ogummaa",
+      "experience": "Muuxannoo",
+      "education": "Barnoota",
+      "projects": "Pirojektoota"
     }
   },
   "loading": {

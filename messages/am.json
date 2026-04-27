@@ -127,6 +127,7 @@
       "generating": "CV በመፍጠር ላይ...",
       "template": "ቴምፕሌት",
       "exportPdf": "PDF አውጣ",
+      "exportDocx": "DOCX አውጣ",
       "previewTitle": "የCV ቅድመ እይታ",
       "previewDescription": "ከማውጣትዎ በፊት የተሻሻለውን CV ይመልከቱ።",
       "ready": "ዝግጁ",
@@ -180,6 +181,7 @@
       "quizReady": "የቃለ መጠይቅ ዝግጅት ዝግጁ ነው።",
       "cvGenerated": "የተሻሻለ CV ረቂቅ ተፈጥሯል።",
       "pdfStarted": "PDF ማውጣት ተጀምሯል።",
+      "docxStarted": "DOCX ማውጣት ተጀምሯል።",
       "draftCleared": "የትንታኔ ረቂቅ ተጠርጓል።"
     },
     "errors": {
@@ -189,7 +191,16 @@
       "jobsFailed": "ምክሮችን መጫን አልተሳካም።",
       "quizFailed": "የቃለ መጠይቅ ጥያቄዎችን መፍጠር አልተሳካም።",
       "cvFailed": "የተሻሻለ CV መፍጠር አልተሳካም።",
-      "pdfFailed": "የተሻሻለ CV ማውጣት አልተሳካም።"
+      "pdfFailed": "የተሻሻለ CV ማውጣት አልተሳካም።",
+      "docxFailed": "DOCX ማውጣት አልተሳካም።"
+    },
+    "docx": {
+      "candidateName": "የእጩ ስም",
+      "summary": "ማጠቃለያ",
+      "skills": "ችሎታዎች",
+      "experience": "ልምድ",
+      "education": "ትምህርት",
+      "projects": "ፕሮጀክቶች"
     }
   },
   "loading": {
