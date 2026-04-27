@@ -30,7 +30,21 @@
     "atsDesc": "Ensure your resume gets past Applicant Tracking Systems with our specialized optimization tools.",
     "actionableTitle": "Actionable Suggestions",
     "actionableDesc": "Receive specific, step-by-step recommendations to strengthen your resume and increase interview chances.",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "keyFeaturesSubtitle": "Everything you need to understand fit, improve your CV, and move faster toward interviews.",
+    "simpleProcess": "Simple Process",
+    "threeSteps": "Three steps to",
+    "resumePerfection": "resume confidence",
+    "threeStepsSubtitle": "Go from raw resume to targeted application assets in one guided workflow.",
+    "step1Title": "Upload your resume",
+    "step1Desc": "Add your PDF, DOCX, or TXT resume securely so CVSmart can understand your current experience.",
+    "step2Title": "Match the job",
+    "step2Desc": "Paste the target job description and get a focused analysis of strengths, gaps, and ATS alignment.",
+    "step3Title": "Improve and export",
+    "step3Desc": "Generate an improved CV draft, choose a professional template, and export a polished PDF.",
+    "ctaTitle": "Ready to build a stronger application?",
+    "ctaSubtitle": "Analyze your resume, uncover the highest-impact fixes, and generate a tailored CV in minutes.",
+    "getStartedFree": "Get Started Free"
   },
   "footer": {
     "allRightsReserved": "All rights reserved.",
@@ -43,5 +57,145 @@
     "contact": "Contact",
     "privacy": "Privacy",
     "terms": "Terms"
+  },
+  "analyze": {
+    "page": {
+      "titlePrefix": "Resume",
+      "titleHighlight": "Analyzer",
+      "subtitle": "Upload your resume and job description to get AI-powered insights, job recommendations, interview prep, and an improved CV."
+    },
+    "steps": {
+      "upload": "Upload CV",
+      "job": "Job description",
+      "results": "View results"
+    },
+    "upload": {
+      "title": "Upload Resume",
+      "description": "Click to upload or drag and drop your CV file.",
+      "prompt": "Click to upload or drag your resume here",
+      "dropHere": "Drop your resume here",
+      "help": "PDF, DOCX, or TXT (max. 10MB)",
+      "ready": "File ready for analysis",
+      "empty": "No file selected"
+    },
+    "job": {
+      "title": "Job Description",
+      "description": "Paste the target job description. Minimum 20 characters.",
+      "placeholder": "Paste the job description here..."
+    },
+    "tabs": {
+      "overview": "Overview",
+      "breakdown": "Breakdown",
+      "actions": "Actions",
+      "cv": "Improved CV"
+    },
+    "actions": {
+      "dismiss": "dismiss",
+      "next": "Next",
+      "back": "Back",
+      "analyze": "Analyze",
+      "backToJob": "Back to Job Description",
+      "reanalyze": "Re-analyze",
+      "reset": "Reset"
+    },
+    "status": {
+      "analyzing": "Analyzing"
+    },
+    "results": {
+      "applyingFor": "Applying for",
+      "overallMatch": "Overall Match",
+      "outOf100": "out of 100",
+      "strengths": "Strengths",
+      "gaps": "Gaps",
+      "gapsToAddress": "Gaps to address",
+      "noStrengths": "No strengths provided.",
+      "noGaps": "No gaps provided.",
+      "fullAnalysis": "Full Analysis",
+      "technicalAlignment": "Technical Alignment",
+      "experienceMatch": "Experience Match",
+      "projectRelevance": "Project Relevance",
+      "communicationFit": "Communication & Fit",
+      "technicalFallback": "Strong technical overlap",
+      "experienceFallback": "Experience level compared to role requirements",
+      "projectFallback": "Project examples aligned with the job scope",
+      "communicationFallback": "Professional communication fit"
+    },
+    "cv": {
+      "title": "Generate improved CV",
+      "description": "Create a targeted CV draft using the job description, match score, strengths, and gaps from this analysis.",
+      "generate": "Generate improved CV",
+      "generating": "Generating CV...",
+      "template": "Template",
+      "exportPdf": "Export PDF",
+      "previewTitle": "Live CV Preview",
+      "previewDescription": "Review the improved CV before exporting.",
+      "ready": "Ready",
+      "emptyTitle": "No improved CV generated yet",
+      "emptyDescription": "Generate a draft to preview templates and export a PDF."
+    },
+    "templates": {
+      "classic": "Classic",
+      "modern": "Modern",
+      "minimal": "Minimal"
+    },
+    "actionsPanel": {
+      "jobsTitle": "Get job recommendations",
+      "jobsDescription": "Personalized roles based on your CV and this job description.",
+      "findingJobs": "Finding jobs...",
+      "findRecommendations": "Find recommendations",
+      "searchQuery": "Search query: {query}",
+      "recommendedJobs": "Recommended jobs",
+      "locationNotSpecified": "Location not specified",
+      "openJob": "Open {title}"
+    },
+    "quiz": {
+      "title": "Interview prep quiz",
+      "description": "Generate practice interview questions from your target role.",
+      "generating": "Generating questions...",
+      "generate": "Generate practice questions",
+      "practiceTitle": "Interview Practice Quiz",
+      "submit": "Submit answers",
+      "score": "Score: {score} / {total}",
+      "retake": "Retake"
+    },
+    "validation": {
+      "invalidFileType": "Upload a PDF, DOCX, or TXT file.",
+      "fileTooLarge": "File is too large. Max size is 10MB.",
+      "resumeAndJobRequired": "Please upload a resume and add a job description with at least 20 characters.",
+      "resumeRequired": "Resume file is required.",
+      "uploadAndJobFirst": "Upload a resume and job description first.",
+      "jobFirst": "Add a job description first.",
+      "analysisFirst": "Run the analysis before generating an improved CV.",
+      "cvFirst": "Generate an improved CV before exporting."
+    },
+    "messages": {
+      "interrupted": "Analysis was interrupted by reload. Click Analyze again to resume.",
+      "recovered": "Recovered your draft after page reload.",
+      "recoveredToast": "Recovered your previous analysis draft.",
+      "resumeSelected": "Resume file selected.",
+      "analysisComplete": "Analysis complete.",
+      "noJobs": "No jobs found for this profile yet.",
+      "jobsReady": "Job recommendations ready.",
+      "noQuiz": "No quiz questions generated yet. Try again.",
+      "quizReady": "Interview prep quiz is ready.",
+      "cvGenerated": "Improved CV draft generated.",
+      "pdfStarted": "PDF export started.",
+      "draftCleared": "Analysis draft cleared."
+    },
+    "errors": {
+      "unexpectedHtml": "Server returned an unexpected HTML response. Please refresh and try again.",
+      "unexpectedFormat": "Server returned an unexpected response format.",
+      "analysisFailed": "Analysis failed.",
+      "jobsFailed": "Failed to load recommendations.",
+      "quizFailed": "Failed to generate interview quiz.",
+      "cvFailed": "Failed to generate improved CV.",
+      "pdfFailed": "Failed to export improved CV."
+    }
+  },
+  "loading": {
+    "mainTitle": "Preparing your workspace",
+    "mainSubtitle": "Loading the next CVSmart experience...",
+    "authTitle": "Preparing secure access",
+    "authSubtitle": "Loading your authentication flow..."
   }
 }

@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
   Briefcase,
   Check,
+  Download,
   ExternalLink,
+  FilePlus2,
   Loader2,
   MapPin,
   RotateCcw,
@@ -22,6 +25,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { postJson } from "@/lib/fetchers";
+import { exportElementToPdf } from "@/lib/pdf-export";
+import { TEMPLATE_MAP, type CVData, type TemplateId } from "@/components/cv-templates";
 
 type Step = 1 | 2 | 3;
 type Status = "idle" | "running" | "success" | "error";
@@ -52,6 +58,8 @@ type QuizQuestion = {
   explanation: string;
 };
 
+type GenerateCvResponse = { sections: CVData };
+
 type AnalyzeState = {
   step: Step;
   status: Status;
@@ -76,6 +84,10 @@ type Action =
   | { type: "RESET_ALL" };
 
 const STORAGE_KEY = "cvsmart.analysis.workflow.v1";
+const RESUME_EXTENSIONS = [".pdf", ".docx", ".txt"];
+const MAX_RESUME_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const A4_WIDTH_PX = 794;
+const A4_HEIGHT_PX = 1123;
 
 const initialState: AnalyzeState = {
   step: 1,
@@ -115,7 +127,7 @@ function reducer(state: AnalyzeState, action: Action): AnalyzeState {
   }
 }
 
-function readPersistedState(): AnalyzeState | null {
+function readPersistedState(copy: { interrupted: string; recovered: string }): AnalyzeState | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
@@ -126,11 +138,11 @@ function readPersistedState(): AnalyzeState | null {
         ...parsed,
         status: "error",
         progress: 0,
-        error: "Analysis was interrupted by reload. Click Analyze again to resume.",
-        restoredNotice: "Recovered your draft after page reload.",
+        error: copy.interrupted,
+        restoredNotice: copy.recovered,
       };
     }
-    return { ...parsed, restoredNotice: "Recovered your draft after page reload." };
+    return { ...parsed, restoredNotice: copy.recovered };
   } catch {
     return null;
   }
@@ -142,7 +154,22 @@ function scoreTone(score: number): "good" | "mid" | "low" {
   return "low";
 }
 
-function ScoreRing({ score }: { score: number }) {
+function getResumeFileError(file: File, copy: { invalidType: string; tooLarge: string }): string | null {
+  const fileName = file.name.toLowerCase();
+  if (!RESUME_EXTENSIONS.some((ext) => fileName.endsWith(ext))) {
+    return copy.invalidType;
+  }
+  if (file.size > MAX_RESUME_FILE_SIZE_BYTES) {
+    return copy.tooLarge;
+  }
+  return null;
+}
+
+function templateLabel(templateId: TemplateId, labels: Record<TemplateId, string>) {
+  return labels[templateId];
+}
+
+function ScoreRing({ score, label }: { score: number; label: string }) {
   const normalized = Math.max(0, Math.min(100, score));
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
@@ -166,7 +193,7 @@ function ScoreRing({ score }: { score: number }) {
       </svg>
       <div className="absolute text-center">
         <p className="text-2xl font-bold">{normalized}</p>
-        <p className="text-[10px] text-muted-foreground">out of 100</p>
+        <p className="text-[10px] text-muted-foreground">{label}</p>
       </div>
     </div>
   );
@@ -181,8 +208,9 @@ function MiniBar({ score, color }: { score: number; color: string }) {
 }
 
 export function AnalyzeWorkflowForm() {
+  const t = useTranslations("analyze");
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [activeTab, setActiveTab] = useState<"overview" | "breakdown" | "actions">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "breakdown" | "actions" | "cv">("overview");
   const [jobs, setJobs] = useState<JobRecommendation[]>([]);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobsSearchQuery, setJobsSearchQuery] = useState("");
@@ -191,18 +219,41 @@ export function AnalyzeWorkflowForm() {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, "A" | "B" | "C" | "D">>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [isDraggingResume, setIsDraggingResume] = useState(false);
+  const [cvSections, setCvSections] = useState<CVData | null>(null);
+  const [templateId, setTemplateId] = useState<TemplateId>("classic");
+  const [cvLoading, setCvLoading] = useState(false);
+  const [downloadingCvPdf, setDownloadingCvPdf] = useState(false);
+  const cvPreviewRef = useRef<HTMLDivElement>(null);
+  const restoredDraftRef = useRef(false);
   const [resumeFile, setResumeFile] = useReducer(
     (_: File | null, next: File | null) => next,
     null
   );
+  const templateLabels: Record<TemplateId, string> = {
+    classic: t("templates.classic"),
+    modern: t("templates.modern"),
+    minimal: t("templates.minimal"),
+  };
+  const tabLabels: Record<"overview" | "breakdown" | "actions" | "cv", string> = {
+    overview: t("tabs.overview"),
+    breakdown: t("tabs.breakdown"),
+    actions: t("tabs.actions"),
+    cv: t("tabs.cv"),
+  };
 
   useEffect(() => {
-    const restored = readPersistedState();
+    if (restoredDraftRef.current) return;
+    const restored = readPersistedState({
+      interrupted: t("messages.interrupted"),
+      recovered: t("messages.recovered"),
+    });
     if (restored) {
+      restoredDraftRef.current = true;
       dispatch({ type: "RESTORE", payload: restored });
-      toast.info("Recovered your previous analysis draft.");
+      toast.info(t("messages.recoveredToast"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -211,6 +262,7 @@ export function AnalyzeWorkflowForm() {
 
   const canGoStep2 = Boolean(resumeFile);
   const canAnalyze = canGoStep2 && state.jobDescription.trim().length >= 20;
+  const CvPreviewComponent = cvSections ? TEMPLATE_MAP[templateId] : null;
 
   const scoreColor = useMemo(() => {
     const score = state.result?.structured.overallScore ?? 0;
@@ -219,36 +271,45 @@ export function AnalyzeWorkflowForm() {
     return "text-rose-400";
   }, [state.result?.structured.overallScore]);
 
-  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    event.currentTarget.value = "";
+  const acceptResumeFile = (file: File | null) => {
     if (!file) return;
-    const fileName = file.name.toLowerCase();
-    const allowed = [".pdf", ".docx", ".txt"];
-    if (!allowed.some((ext) => fileName.endsWith(ext))) {
-      toast.error("Upload a PDF, DOCX, or TXT file.");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File is too large. Max size is 10MB.");
+    const error = getResumeFileError(file, {
+      invalidType: t("validation.invalidFileType"),
+      tooLarge: t("validation.fileTooLarge"),
+    });
+    if (error) {
+      toast.error(error);
       return;
     }
     setResumeFile(file);
     dispatch({ type: "SET_FILE", payload: file.name });
-    toast.success("Resume file selected.");
+    toast.success(t("messages.resumeSelected"));
+  };
+
+  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    event.currentTarget.value = "";
+    acceptResumeFile(file);
+  };
+
+  const onResumeDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDraggingResume(false);
+    acceptResumeFile(event.dataTransfer.files?.[0] ?? null);
   };
 
   const runAnalyze = async () => {
     if (!canAnalyze) {
-      toast.error("Please provide both resume text and job description (20+ chars each).");
+      toast.error(t("validation.resumeAndJobRequired"));
       return;
     }
     if (!resumeFile) {
-      toast.error("Resume file is required.");
+      toast.error(t("validation.resumeRequired"));
       return;
     }
 
     dispatch({ type: "RUN_START" });
+    setCvSections(null);
 
     let progress = 5;
     const timer = window.setInterval(() => {
@@ -269,20 +330,21 @@ export function AnalyzeWorkflowForm() {
         const nonJsonBody = await response.text();
         throw new Error(
           nonJsonBody.includes("<!DOCTYPE")
-            ? "Server returned an unexpected HTML response. Please refresh and try again."
-            : "Server returned an unexpected response format."
+            ? t("errors.unexpectedHtml")
+            : t("errors.unexpectedFormat")
         );
       }
 
       if (!response.ok || payload.error || !payload.data) {
-        throw new Error(payload.error?.message || "Analysis failed.");
+        throw new Error(payload.error?.message || t("errors.analysisFailed"));
       }
       const data = payload.data;
       dispatch({ type: "RUN_SUCCESS", payload: data });
       setActiveTab("overview");
-      toast.success("Analysis complete.");
+      setCvSections(null);
+      toast.success(t("messages.analysisComplete"));
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Analysis failed.";
+      const message = error instanceof Error ? error.message : t("errors.analysisFailed");
       dispatch({ type: "RUN_ERROR", payload: message });
       toast.error(message);
     } finally {
@@ -292,7 +354,7 @@ export function AnalyzeWorkflowForm() {
 
   const loadJobRecommendations = async () => {
     if (!resumeFile || !state.jobDescription.trim()) {
-      toast.error("Upload resume and job description first.");
+      toast.error(t("validation.uploadAndJobFirst"));
       return;
     }
     setJobsLoading(true);
@@ -308,19 +370,19 @@ export function AnalyzeWorkflowForm() {
         error?: { message?: string };
       };
       if (!response.ok || payload.error) {
-        throw new Error(payload.error?.message || "Failed to load recommendations.");
+        throw new Error(payload.error?.message || t("errors.jobsFailed"));
       }
       const list = payload.data?.jobs ?? [];
       setJobs(list);
       setJobsSearchQuery(payload.data?.searchQuery ?? "");
       setJobsWarning(payload.data?.warning ?? null);
       if (!list.length) {
-        toast.info("No jobs found for this profile yet.");
+        toast.info(t("messages.noJobs"));
       } else {
-        toast.success("Job recommendations ready.");
+        toast.success(t("messages.jobsReady"));
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load recommendations.";
+      const message = error instanceof Error ? error.message : t("errors.jobsFailed");
       setJobsWarning(message);
       toast.error(message);
     } finally {
@@ -330,7 +392,7 @@ export function AnalyzeWorkflowForm() {
 
   const generateInterviewQuiz = async () => {
     if (!state.jobDescription.trim() || state.jobDescription.trim().length < 20) {
-      toast.error("Add a job description first.");
+      toast.error(t("validation.jobFirst"));
       return;
     }
     setQuizLoading(true);
@@ -348,20 +410,74 @@ export function AnalyzeWorkflowForm() {
         error?: { message?: string };
       };
       if (!response.ok || payload.error) {
-        throw new Error(payload.error?.message || "Failed to generate interview quiz.");
+        throw new Error(payload.error?.message || t("errors.quizFailed"));
       }
       const questions = payload.data?.questions ?? [];
       setQuizQuestions(questions);
       if (!questions.length) {
-        toast.info("No quiz questions generated yet. Try again.");
+        toast.info(t("messages.noQuiz"));
       } else {
-        toast.success("Interview prep quiz is ready.");
+        toast.success(t("messages.quizReady"));
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to generate quiz.";
+      const message = error instanceof Error ? error.message : t("errors.quizFailed");
       toast.error(message);
     } finally {
       setQuizLoading(false);
+    }
+  };
+
+  const generateImprovedCv = async () => {
+    if (!state.result) {
+      toast.error(t("validation.analysisFirst"));
+      return;
+    }
+    setCvLoading(true);
+    try {
+      const analysisContext = [
+        state.result.analysis,
+        state.result.structured.strengths.length
+          ? `${t("results.strengths")}:\n${state.result.structured.strengths.map((item) => `- ${item}`).join("\n")}`
+          : "",
+        state.result.structured.gaps.length
+          ? `${t("results.gapsToAddress")}:\n${state.result.structured.gaps.map((item) => `- ${item}`).join("\n")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      const payload = await postJson<GenerateCvResponse, { jobDescription: string; analysis: string }>(
+        "/api/cv/templates",
+        {
+          jobDescription: state.jobDescription.trim(),
+          analysis: analysisContext,
+        }
+      );
+      setCvSections(payload.sections);
+      setActiveTab("cv");
+      toast.success(t("messages.cvGenerated"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("errors.cvFailed"));
+    } finally {
+      setCvLoading(false);
+    }
+  };
+
+  const exportImprovedCvPdf = async () => {
+    if (!cvPreviewRef.current) {
+      toast.error(t("validation.cvFirst"));
+      return;
+    }
+    setDownloadingCvPdf(true);
+    try {
+      await exportElementToPdf({
+        element: cvPreviewRef.current,
+        filename: "improved_cv.pdf",
+      });
+      toast.success(t("messages.pdfStarted"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("errors.pdfFailed"));
+    } finally {
+      setDownloadingCvPdf(false);
     }
   };
 
@@ -372,9 +488,9 @@ export function AnalyzeWorkflowForm() {
     : 0;
 
   const stepMeta: Array<{ id: Step; label: string }> = [
-    { id: 1, label: "Upload CV" },
-    { id: 2, label: "Job description" },
-    { id: 3, label: "View results" },
+    { id: 1, label: t("steps.upload") },
+    { id: 2, label: t("steps.job") },
+    { id: 3, label: t("steps.results") },
   ];
   const completedThrough =
     state.step === 3 ? (state.status === "success" ? 3 : 2) : state.step === 2 ? 1 : 0;
@@ -385,34 +501,34 @@ export function AnalyzeWorkflowForm() {
     return [
       {
         id: "technical",
-        label: "Technical Alignment",
+        label: t("results.technicalAlignment"),
         score: overall,
         color: "#00e5a0",
-        details: result.strengths.slice(0, 3).length ? result.strengths.slice(0, 3) : ["Strong technical overlap"],
+        details: result.strengths.slice(0, 3).length ? result.strengths.slice(0, 3) : [t("results.technicalFallback")],
       },
       {
         id: "experience",
-        label: "Experience Match",
+        label: t("results.experienceMatch"),
         score: Math.max(0, Math.min(100, overall - 6)),
         color: "#ff4d6d",
-        details: ["Experience level compared to role requirements"],
+        details: [t("results.experienceFallback")],
       },
       {
         id: "projects",
-        label: "Project Relevance",
+        label: t("results.projectRelevance"),
         score: Math.max(0, Math.min(100, overall - 3)),
         color: "#00b4d8",
-        details: ["Project examples aligned with the job scope"],
+        details: [t("results.projectFallback")],
       },
       {
         id: "communication",
-        label: "Communication & Fit",
+        label: t("results.communicationFit"),
         score: Math.max(0, Math.min(100, overall - 8)),
         color: "#f5a524",
-        details: result.gaps.slice(0, 2).length ? result.gaps.slice(0, 2) : ["Professional communication fit"],
+        details: result.gaps.slice(0, 2).length ? result.gaps.slice(0, 2) : [t("results.communicationFallback")],
       },
     ];
-  }, [state.result]);
+  }, [state.result, t]);
 
   return (
     <div className="space-y-8">
@@ -424,7 +540,7 @@ export function AnalyzeWorkflowForm() {
             type="button"
             onClick={() => dispatch({ type: "CLEAR_NOTICE" })}
           >
-            dismiss
+            {t("actions.dismiss")}
           </button>
         </div>
       ) : null}
@@ -476,23 +592,47 @@ export function AnalyzeWorkflowForm() {
       {state.step === 1 ? (
         <Card className="mx-auto max-w-3xl overflow-hidden border-border/80 bg-card/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Upload Resume</CardTitle>
-            <CardDescription>Click to upload or drag and drop your CV file.</CardDescription>
+            <CardTitle>{t("upload.title")}</CardTitle>
+            <CardDescription>{t("upload.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <label className="flex h-56 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center transition hover:bg-muted/40">
+            <label
+              className={`flex h-56 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center transition ${
+                isDraggingResume
+                  ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                  : "border-border bg-muted/30 hover:bg-muted/40"
+              }`}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setIsDraggingResume(true);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setIsDraggingResume(true);
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                setIsDraggingResume(false);
+              }}
+              onDrop={onResumeDrop}
+            >
               <input type="file" className="hidden" accept=".pdf,.docx,.txt" onChange={onFileChange} />
               <span className="mb-3 rounded-full border border-border bg-background/80 p-3">
                 <Upload className="h-6 w-6 text-muted-foreground" />
               </span>
               <p className="text-sm font-medium text-foreground">
-                {state.resumeFileName ? state.resumeFileName : "Click to upload resume"}
+                {state.resumeFileName
+                  ? state.resumeFileName
+                  : isDraggingResume
+                    ? t("upload.dropHere")
+                    : t("upload.prompt")}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">PDF or DOCX (max. 10MB)</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("upload.help")}</p>
             </label>
             <div className="flex justify-between">
               <p className="text-xs text-muted-foreground">
-                {state.resumeFileName ? "File ready for analysis" : "No file selected"}
+                {state.resumeFileName ? t("upload.ready") : t("upload.empty")}
               </p>
               <Button
                 type="button"
@@ -500,7 +640,7 @@ export function AnalyzeWorkflowForm() {
                 disabled={!canGoStep2}
                 onClick={() => dispatch({ type: "SET_STEP", payload: 2 })}
               >
-                Next <ArrowRight className="ml-1 h-4 w-4" />
+                {t("actions.next")} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
           </CardContent>
@@ -510,15 +650,15 @@ export function AnalyzeWorkflowForm() {
       {state.step === 2 ? (
         <Card className="mx-auto max-w-4xl overflow-hidden border-border/80 bg-card/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Job Description</CardTitle>
-            <CardDescription>Paste the target job description. Minimum 20 characters.</CardDescription>
+            <CardTitle>{t("job.title")}</CardTitle>
+            <CardDescription>{t("job.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
               value={state.jobDescription}
               onChange={(e) => dispatch({ type: "SET_JOB", payload: e.target.value })}
               rows={12}
-              placeholder="Paste the job description here..."
+              placeholder={t("job.placeholder")}
               className="max-h-72 min-h-72"
             />
             <div className="flex justify-between">
@@ -528,7 +668,7 @@ export function AnalyzeWorkflowForm() {
                 className="rounded-full px-6"
                 onClick={() => dispatch({ type: "SET_STEP", payload: 1 })}
               >
-                <ArrowLeft className="mr-1 h-4 w-4" /> Back
+                <ArrowLeft className="mr-1 h-4 w-4" /> {t("actions.back")}
               </Button>
               <Button
                 type="button"
@@ -536,7 +676,7 @@ export function AnalyzeWorkflowForm() {
                 onClick={runAnalyze}
                 disabled={!canAnalyze || state.status === "running"}
               >
-                Analyze <Sparkles className="ml-1 h-4 w-4" />
+                {t("actions.analyze")} <Sparkles className="ml-1 h-4 w-4" />
               </Button>
             </div>
           </CardContent>
@@ -548,7 +688,7 @@ export function AnalyzeWorkflowForm() {
           {state.status === "running" ? (
             <Card className="mx-auto max-w-4xl border-border/80 bg-card/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Job Description</CardTitle>
+                <CardTitle>{t("job.title")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg border border-border bg-background/70 p-3 text-sm text-foreground">
@@ -558,7 +698,7 @@ export function AnalyzeWorkflowForm() {
                 <div className="flex justify-center">
                   <Button type="button" className="rounded-full px-8" disabled>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing
+                    {t("status.analyzing")}
                   </Button>
                 </div>
               </CardContent>
@@ -575,22 +715,22 @@ export function AnalyzeWorkflowForm() {
             <>
               <div className="grid gap-4 md:grid-cols-[1fr_220px]">
                 <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm">
-                  <p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Applying for</p>
-                  <h3 className="text-2xl font-semibold text-foreground">Job Description</h3>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">{t("results.applyingFor")}</p>
+                  <h3 className="text-2xl font-semibold text-foreground">{t("job.title")}</h3>
                   <p className={`mt-3 inline-flex rounded-lg border px-3 py-1.5 text-sm font-semibold ${scoreColor}`}>
                     {state.result.structured.verdict}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm">
-                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Overall Match</p>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{t("results.overallMatch")}</p>
                   <div className="mt-2 flex justify-center">
-                    <ScoreRing score={state.result.structured.overallScore} />
+                    <ScoreRing score={state.result.structured.overallScore} label={t("results.outOf100")} />
                   </div>
                 </div>
               </div>
 
-              <div className="flex w-fit gap-1 rounded-xl border border-border bg-muted/30 p-1">
-                {(["overview", "breakdown", "actions"] as const).map((tab) => (
+              <div className="flex w-fit flex-wrap gap-1 rounded-xl border border-border bg-muted/30 p-1">
+                {(["overview", "breakdown", "actions", "cv"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -601,7 +741,7 @@ export function AnalyzeWorkflowForm() {
                     }`}
                     type="button"
                   >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tabLabels[tab]}
                   </button>
                 ))}
               </div>
@@ -632,7 +772,7 @@ export function AnalyzeWorkflowForm() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
-                      <p className="mb-3 text-xs uppercase tracking-widest text-emerald-300">Strengths</p>
+                      <p className="mb-3 text-xs uppercase tracking-widest text-emerald-300">{t("results.strengths")}</p>
                       {state.result.structured.strengths.length ? (
                         state.result.structured.strengths.map((item, idx) => (
                           <div key={idx} className="mb-2 flex items-start gap-2 text-sm text-emerald-200">
@@ -641,11 +781,11 @@ export function AnalyzeWorkflowForm() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-emerald-200/90">No strengths provided.</p>
+                        <p className="text-sm text-emerald-200/90">{t("results.noStrengths")}</p>
                       )}
                     </div>
                     <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
-                      <p className="mb-3 text-xs uppercase tracking-widest text-rose-300">Gaps</p>
+                      <p className="mb-3 text-xs uppercase tracking-widest text-rose-300">{t("results.gaps")}</p>
                       {state.result.structured.gaps.length ? (
                         state.result.structured.gaps.map((item, idx) => (
                           <div key={idx} className="mb-2 flex items-start gap-2 text-sm text-rose-200">
@@ -654,7 +794,7 @@ export function AnalyzeWorkflowForm() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-rose-200/90">No gaps provided.</p>
+                        <p className="text-sm text-rose-200/90">{t("results.noGaps")}</p>
                       )}
                     </div>
                   </div>
@@ -663,9 +803,110 @@ export function AnalyzeWorkflowForm() {
 
               {activeTab === "breakdown" ? (
                 <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm">
-                  <h3 className="mb-4 text-sm font-semibold text-foreground">Full Analysis</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-foreground">{t("results.fullAnalysis")}</h3>
                   <div className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
                     {state.result.analysis}
+                  </div>
+                </div>
+              ) : null}
+
+              {activeTab === "cv" ? (
+                <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur-sm">
+                      <div className="mb-4 flex items-start gap-3">
+                        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 p-2">
+                          <FilePlus2 className="h-4 w-4 text-emerald-300" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{t("cv.title")}</p>
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            {t("cv.description")}
+                          </p>
+                        </div>
+                      </div>
+                      <Button onClick={generateImprovedCv} disabled={cvLoading} className="w-full rounded-lg">
+                        {cvLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t("cv.generating")}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            {t("cv.generate")}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur-sm">
+                      <p className="mb-3 text-sm font-semibold text-foreground">{t("cv.template")}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(["classic", "modern", "minimal"] as TemplateId[]).map((id) => (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => setTemplateId(id)}
+                            className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                              templateId === id
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {templateLabel(id, templateLabels)}
+                          </button>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={exportImprovedCvPdf}
+                        disabled={!cvSections || downloadingCvPdf}
+                        className="mt-4 w-full rounded-lg"
+                      >
+                        {downloadingCvPdf ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="mr-2 h-4 w-4" />
+                        )}
+                        {t("cv.exportPdf")}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur-sm">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">{t("cv.previewTitle")}</h3>
+                        <p className="text-xs text-muted-foreground">{t("cv.previewDescription")}</p>
+                      </div>
+                      {cvSections ? (
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-200">
+                          {t("cv.ready")}
+                        </span>
+                      ) : null}
+                    </div>
+                    {cvSections && CvPreviewComponent ? (
+                      <div className="max-h-[720px] overflow-auto rounded-md border border-border bg-muted/30 p-3">
+                        <div
+                          ref={cvPreviewRef}
+                          className="mx-auto bg-white"
+                          style={{ width: A4_WIDTH_PX, minHeight: A4_HEIGHT_PX }}
+                        >
+                          <CvPreviewComponent data={cvSections} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex min-h-[320px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 p-6 text-center">
+                        <div>
+                          <FilePlus2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                          <p className="text-sm font-medium text-foreground">{t("cv.emptyTitle")}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {t("cv.emptyDescription")}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -678,9 +919,9 @@ export function AnalyzeWorkflowForm() {
                         <Search className="h-4 w-4 text-violet-400" />
                       </div>
                       <div>
-                        <p className="font-semibold">Get job recommendations</p>
+                        <p className="font-semibold">{t("actionsPanel.jobsTitle")}</p>
                         <p className="text-xs text-muted-foreground">
-                          Personalized roles based on your CV and this job description.
+                          {t("actionsPanel.jobsDescription")}
                         </p>
                       </div>
                     </div>
@@ -688,14 +929,14 @@ export function AnalyzeWorkflowForm() {
                       {jobsLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Finding jobs...
+                          {t("actionsPanel.findingJobs")}
                         </>
                       ) : (
-                        "Find recommendations"
+                        t("actionsPanel.findRecommendations")
                       )}
                     </Button>
                     {jobsSearchQuery ? (
-                      <p className="mt-3 text-xs text-muted-foreground">Search query: {jobsSearchQuery}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">{t("actionsPanel.searchQuery", { query: jobsSearchQuery })}</p>
                     ) : null}
                     {jobsWarning ? (
                       <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
@@ -708,7 +949,7 @@ export function AnalyzeWorkflowForm() {
                     <div className="rounded-xl border border-border bg-card/60 p-5">
                       <div className="mb-3 flex items-center gap-2">
                         <Briefcase className="h-4 w-4 text-violet-400" />
-                        <p className="font-semibold">Recommended jobs</p>
+                        <p className="font-semibold">{t("actionsPanel.recommendedJobs")}</p>
                       </div>
                       <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
                         {jobs.map((job, idx) => (
@@ -719,7 +960,7 @@ export function AnalyzeWorkflowForm() {
                                 <p className="truncate text-xs text-muted-foreground">{job.company}</p>
                                 <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                                   <MapPin className="h-3 w-3" />
-                                  {job.location || "Location not specified"}
+                                  {job.location || t("actionsPanel.locationNotSpecified")}
                                 </p>
                               </div>
                               <a
@@ -727,7 +968,7 @@ export function AnalyzeWorkflowForm() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="rounded-full border border-violet-500/40 bg-violet-500/20 p-2 text-violet-300 hover:bg-violet-500/30"
-                                aria-label={`Open ${job.title}`}
+                                aria-label={t("actionsPanel.openJob", { title: job.title })}
                               >
                                 <ExternalLink className="h-3.5 w-3.5" />
                               </a>
@@ -749,9 +990,9 @@ export function AnalyzeWorkflowForm() {
                         <Target className="h-4 w-4 text-cyan-400" />
                       </div>
                       <div>
-                        <p className="font-semibold">Interview prep quiz</p>
+                        <p className="font-semibold">{t("quiz.title")}</p>
                         <p className="text-xs text-muted-foreground">
-                          Generate practice interview questions from your target role.
+                          {t("quiz.description")}
                         </p>
                       </div>
                     </div>
@@ -763,17 +1004,17 @@ export function AnalyzeWorkflowForm() {
                       {quizLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generating questions...
+                          {t("quiz.generating")}
                         </>
                       ) : (
-                        "Generate practice questions"
+                        t("quiz.generate")
                       )}
                     </Button>
                   </div>
 
                   {quizQuestions.length ? (
                     <div className="rounded-xl border border-border bg-card/60 p-5">
-                      <p className="mb-4 font-semibold text-foreground">Interview Practice Quiz</p>
+                      <p className="mb-4 font-semibold text-foreground">{t("quiz.practiceTitle")}</p>
                       <div className="max-h-[520px] space-y-5 overflow-y-auto pr-1">
                         {quizQuestions.map((q, idx) => (
                           <div key={`${q.question}-${idx}`} className="rounded-lg border border-border bg-background/40 p-4">
@@ -832,12 +1073,12 @@ export function AnalyzeWorkflowForm() {
                             className="rounded-lg"
                             disabled={Object.keys(quizAnswers).length < quizQuestions.length}
                           >
-                            Submit answers
+                            {t("quiz.submit")}
                           </Button>
                         ) : (
                           <>
                             <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                              Score: {quizScore} / {quizQuestions.length}
+                              {t("quiz.score", { score: quizScore, total: quizQuestions.length })}
                             </p>
                             <Button
                               variant="outline"
@@ -847,7 +1088,7 @@ export function AnalyzeWorkflowForm() {
                                 setQuizAnswers({});
                               }}
                             >
-                              Retake
+                              {t("quiz.retake")}
                             </Button>
                           </>
                         )}
@@ -866,7 +1107,7 @@ export function AnalyzeWorkflowForm() {
               className="justify-start rounded-xl"
               onClick={() => dispatch({ type: "SET_STEP", payload: 2 })}
             >
-              <ArrowLeft className="mr-1 h-4 w-4" /> Back to Job Description
+              <ArrowLeft className="mr-1 h-4 w-4" /> {t("actions.backToJob")}
             </Button>
             <Button
               type="button"
@@ -874,7 +1115,7 @@ export function AnalyzeWorkflowForm() {
               onClick={runAnalyze}
               disabled={state.status === "running" || !canAnalyze}
             >
-              Re-analyze
+              {t("actions.reanalyze")}
             </Button>
             <Button
               type="button"
@@ -889,13 +1130,15 @@ export function AnalyzeWorkflowForm() {
                 setQuizQuestions([]);
                 setQuizAnswers({});
                 setQuizSubmitted(false);
+                setCvSections(null);
+                setTemplateId("classic");
                 setResumeFile(null);
                 if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE_KEY);
-                toast.success("Analysis draft cleared.");
+                toast.success(t("messages.draftCleared"));
               }}
             >
               <RotateCcw className="mr-1 h-4 w-4" />
-              Reset
+              {t("actions.reset")}
             </Button>
           </div>
         </div>

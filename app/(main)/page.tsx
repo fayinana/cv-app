@@ -45,6 +45,7 @@ export default function HomePage() {
               <span className="text-success mr-2">✦</span><span>{t("keyFeatures")}</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">{t("unlockPower")} <span className="text-display font-serif italic">{t("aiDrivenAnalysis")}</span></h2>
+            <p className="text-xl text-muted-foreground">{t("keyFeaturesSubtitle")}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[{ icon: <Zap className="h-6 w-6 text-primary" />, titleKey: "aiPoweredTitle", descKey: "aiPoweredDesc" }, { icon: <BarChart3 className="h-6 w-6 text-success" />, titleKey: "atsTitle", descKey: "atsDesc" }, { icon: <CheckCircle2 className="h-6 w-6 text-primary" />, titleKey: "actionableTitle", descKey: "actionableDesc" }].map((feature, index) => (
@@ -55,6 +56,51 @@ export default function HomePage() {
                 <div className="mt-6 flex items-center text-sm text-success font-medium"><span>{t("learnMore")}</span><ChevronRight className="h-4 w-4 ml-1" /></div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+      <section id="how-it-works" className="relative z-10 py-24 border-t border-border">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-muted backdrop-blur-sm border border-border text-sm mb-6 text-foreground">
+              <span className="text-primary mr-2">✦</span><span>{t("simpleProcess")}</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">{t("threeSteps")} <span className="text-display font-serif italic">{t("resumePerfection")}</span></h2>
+            <p className="text-xl text-muted-foreground">{t("threeStepsSubtitle")}</p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {[
+              { number: "01", titleKey: "step1Title", descKey: "step1Desc" },
+              { number: "02", titleKey: "step2Title", descKey: "step2Desc" },
+              { number: "03", titleKey: "step3Title", descKey: "step3Desc" },
+            ].map((step, index) => (
+              <div key={step.number} className="relative">
+                <div className="absolute left-0 top-0 -ml-4 -mt-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground shadow-lg">
+                  {step.number}
+                </div>
+                <div className="h-full rounded-xl border border-border bg-card p-8 pt-12 backdrop-blur-sm transition hover:bg-accent/50">
+                  <h3 className="mb-3 text-xl font-bold text-foreground">{t(step.titleKey)}</h3>
+                  <p className="text-muted-foreground">{t(step.descKey)}</p>
+                </div>
+                {index < 2 ? (
+                  <ArrowRight className="absolute right-0 top-1/2 hidden h-6 w-6 translate-x-1/2 text-muted-foreground md:block" />
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-6">
+          <div className="relative overflow-hidden rounded-2xl border border-primary-foreground/10 bg-primary px-8 py-16 shadow-xl md:px-16">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_35%)]" />
+            <div className="relative mx-auto max-w-3xl text-center">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl md:text-5xl">{t("ctaTitle")}</h2>
+              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-primary-foreground/80 md:text-xl">{t("ctaSubtitle")}</p>
+              <Button size="lg" className="rounded-full bg-primary-foreground px-8 font-medium text-primary shadow-lg hover:bg-primary-foreground/90" asChild>
+                <Link href="/analyze">{t("getStartedFree")} <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

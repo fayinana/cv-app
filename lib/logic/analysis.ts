@@ -1,4 +1,5 @@
 import { generateJsonWithGemini } from "@/lib/ai/gemini";
+import { env } from "@/lib/env";
 
 type StructuredAnalysis = {
   overallScore: number;
@@ -36,15 +37,21 @@ export async function analyzeResume(params: {
   jobDescription: string;
 }) {
   const heuristicScore = basicKeywordScore(params.resumeText, params.jobDescription);
+  const providerMessage = env.GOOGLE_API_KEY
+    ? "Heuristic analysis mode is active because the AI provider did not return a usable response. Check the Google API key permissions, quota, model access, and server logs."
+    : "Heuristic analysis mode is active. Configure GOOGLE_API_KEY and restart the dev server for richer AI analysis.";
   const fallback: { structured: StructuredAnalysis; analysis: string } = {
     structured: {
       overallScore: heuristicScore,
       verdict: verdictFromScore(heuristicScore),
       strengths: ["Resume contains role-relevant keywords."],
-      gaps: ["Detailed AI gap analysis unavailable (provider not configured)."],
+      gaps: [
+        env.GOOGLE_API_KEY
+          ? "Detailed AI gap analysis unavailable because the AI provider request failed."
+          : "Detailed AI gap analysis unavailable because GOOGLE_API_KEY is not loaded.",
+      ],
     },
-    analysis:
-      "Heuristic analysis mode is active. Configure GOOGLE_API_KEY for richer AI analysis.",
+    analysis: providerMessage,
   };
 
   const prompt = `

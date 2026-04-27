@@ -30,7 +30,21 @@
     "atsDesc": "የመጣጠፍ ስርዓቶችን በማመቻቻት የህይወት ታሪክዎ እንዲያልፍ ያድርጉ።",
     "actionableTitle": "ተግባራዊ ሀሳቦች",
     "actionableDesc": "የህይወት ታሪክዎን ለማጠናከር እና የቃለ መጠይቅ እድል ለጨምር ዝርዝር ሀሳቦችን ይቀበሉ።",
-    "learnMore": "ተጨማሪ ይወቁ"
+    "learnMore": "ተጨማሪ ይወቁ",
+    "keyFeaturesSubtitle": "የስራ ተስማሚነትን ለመረዳት፣ CVዎን ለማሻሻል እና ወደ ቃለ መጠይቅ በፍጥነት ለመድረስ የሚያስፈልግዎ ሁሉ።",
+    "simpleProcess": "ቀላል ሂደት",
+    "threeSteps": "በሶስት ደረጃዎች ወደ",
+    "resumePerfection": "የCV እርግጠኝነት",
+    "threeStepsSubtitle": "ከመጀመሪያ CV ወደ ለስራው የተዘጋጀ የማመልከቻ ይዘት በተመራ ሂደት ይሂዱ።",
+    "step1Title": "CVዎን ይጫኑ",
+    "step1Desc": "CVSmart የአሁኑን ልምድዎን እንዲረዳ የPDF፣ DOCX ወይም TXT CVዎን በደህና ያክሉ።",
+    "step2Title": "ከስራው ጋር ያዛምዱ",
+    "step2Desc": "የሚፈልጉትን የስራ መግለጫ ይለጥፉ እና የጥንካሬ፣ ክፍተት እና ATS ተስማሚነት ትንታኔ ያግኙ።",
+    "step3Title": "ያሻሽሉ እና ያውጡ",
+    "step3Desc": "የተሻሻለ CV ረቂቅ ይፍጠሩ፣ ሙያዊ ቴምፕሌት ይምረጡ እና PDF ያውጡ።",
+    "ctaTitle": "ጠንካራ ማመልከቻ ለመገንባት ዝግጁ ነዎት?",
+    "ctaSubtitle": "CVዎን ይተንትኑ፣ ከፍተኛ ተፅእኖ ያላቸውን ማሻሻያዎች ያግኙ እና በደቂቃዎች የተስማማ CV ይፍጠሩ።",
+    "getStartedFree": "በነጻ ይጀምሩ"
   },
   "footer": {
     "allRightsReserved": "ሁሉም መብቶች የተጠበቁ ናቸው።",
@@ -43,5 +57,145 @@
     "contact": "አግኙን",
     "privacy": "ግላዊነት",
     "terms": "ውሎች"
+  },
+  "analyze": {
+    "page": {
+      "titlePrefix": "የCV",
+      "titleHighlight": "ትንታኔ",
+      "subtitle": "CVዎን እና የስራ መግለጫውን ይጫኑ፤ በAI የተደገፈ ግኝት፣ የስራ ምክር፣ የቃለ መጠይቅ ዝግጅት እና የተሻሻለ CV ያግኙ።"
+    },
+    "steps": {
+      "upload": "CV ጫን",
+      "job": "የስራ መግለጫ",
+      "results": "ውጤቶችን ይመልከቱ"
+    },
+    "upload": {
+      "title": "CV ይጫኑ",
+      "description": "ፋይሉን ለመጫን ጠቅ ያድርጉ ወይም ጎትተው ይጣሉ።",
+      "prompt": "CVዎን ለመጫን ጠቅ ያድርጉ ወይም እዚህ ይጎትቱ",
+      "dropHere": "CVዎን እዚህ ይጣሉ",
+      "help": "PDF፣ DOCX ወይም TXT (ከ10MB በታች)",
+      "ready": "ፋይሉ ለትንታኔ ዝግጁ ነው",
+      "empty": "ፋይል አልተመረጠም"
+    },
+    "job": {
+      "title": "የስራ መግለጫ",
+      "description": "የሚያመለክቱትን የስራ መግለጫ ይለጥፉ። ቢያንስ 20 ቁምፊዎች።",
+      "placeholder": "የስራ መግለጫውን እዚህ ይለጥፉ..."
+    },
+    "tabs": {
+      "overview": "አጠቃላይ",
+      "breakdown": "ዝርዝር",
+      "actions": "ተግባራት",
+      "cv": "የተሻሻለ CV"
+    },
+    "actions": {
+      "dismiss": "ዝጋ",
+      "next": "ቀጣይ",
+      "back": "ተመለስ",
+      "analyze": "ተንትን",
+      "backToJob": "ወደ ስራ መግለጫ ተመለስ",
+      "reanalyze": "እንደገና ተንትን",
+      "reset": "አጽዳ"
+    },
+    "status": {
+      "analyzing": "በመተንተን ላይ"
+    },
+    "results": {
+      "applyingFor": "የሚያመለክቱት",
+      "overallMatch": "አጠቃላይ ተስማሚነት",
+      "outOf100": "ከ100",
+      "strengths": "ጥንካሬዎች",
+      "gaps": "ክፍተቶች",
+      "gapsToAddress": "መስተካከል ያለባቸው ክፍተቶች",
+      "noStrengths": "ጥንካሬዎች አልተገኙም።",
+      "noGaps": "ክፍተቶች አልተገኙም።",
+      "fullAnalysis": "ሙሉ ትንታኔ",
+      "technicalAlignment": "ቴክኒካዊ ተስማሚነት",
+      "experienceMatch": "የልምድ ተዛማጅነት",
+      "projectRelevance": "የፕሮጀክት ተዛማጅነት",
+      "communicationFit": "ግንኙነት እና ተስማሚነት",
+      "technicalFallback": "ጠንካራ ቴክኒካዊ ተዛማጅነት",
+      "experienceFallback": "የልምድ ደረጃ ከስራው ፍላጎት ጋር ተነጻጽሯል",
+      "projectFallback": "ፕሮጀክቶች ከስራው ወሰን ጋር ተዛማጅ ናቸው",
+      "communicationFallback": "ሙያዊ የግንኙነት ተስማሚነት"
+    },
+    "cv": {
+      "title": "የተሻሻለ CV ይፍጠሩ",
+      "description": "ከዚህ ትንታኔ የስራ መግለጫ፣ የተስማሚነት ውጤት፣ ጥንካሬዎች እና ክፍተቶች በመጠቀም የተመረጠ CV ረቂቅ ይፍጠሩ።",
+      "generate": "የተሻሻለ CV ይፍጠሩ",
+      "generating": "CV በመፍጠር ላይ...",
+      "template": "ቴምፕሌት",
+      "exportPdf": "PDF አውጣ",
+      "previewTitle": "የCV ቅድመ እይታ",
+      "previewDescription": "ከማውጣትዎ በፊት የተሻሻለውን CV ይመልከቱ።",
+      "ready": "ዝግጁ",
+      "emptyTitle": "የተሻሻለ CV እስካሁን አልተፈጠረም",
+      "emptyDescription": "ቴምፕሌቶችን ለመመልከት እና PDF ለማውጣት ረቂቅ ይፍጠሩ።"
+    },
+    "templates": {
+      "classic": "ክላሲክ",
+      "modern": "ዘመናዊ",
+      "minimal": "ቀላል"
+    },
+    "actionsPanel": {
+      "jobsTitle": "የስራ ምክሮችን ያግኙ",
+      "jobsDescription": "በCVዎ እና በዚህ የስራ መግለጫ ላይ የተመሰረቱ የግል ስራዎች።",
+      "findingJobs": "ስራዎች በመፈለግ ላይ...",
+      "findRecommendations": "ምክሮችን ፈልግ",
+      "searchQuery": "የፍለጋ ቃል: {query}",
+      "recommendedJobs": "የተመከሩ ስራዎች",
+      "locationNotSpecified": "ቦታ አልተገለጸም",
+      "openJob": "{title} ክፈት"
+    },
+    "quiz": {
+      "title": "የቃለ መጠይቅ ዝግጅት",
+      "description": "ከሚፈልጉት ስራ የልምምድ የቃለ መጠይቅ ጥያቄዎችን ይፍጠሩ።",
+      "generating": "ጥያቄዎች በመፍጠር ላይ...",
+      "generate": "የልምምድ ጥያቄዎችን ፍጠር",
+      "practiceTitle": "የቃለ መጠይቅ ልምምድ",
+      "submit": "መልሶችን አስገባ",
+      "score": "ውጤት: {score} / {total}",
+      "retake": "እንደገና ውሰድ"
+    },
+    "validation": {
+      "invalidFileType": "PDF፣ DOCX ወይም TXT ፋይል ይጫኑ።",
+      "fileTooLarge": "ፋይሉ በጣም ትልቅ ነው። ከፍተኛው 10MB ነው።",
+      "resumeAndJobRequired": "እባክዎ CV ይጫኑ እና ቢያንስ 20 ቁምፊዎች ያለው የስራ መግለጫ ያክሉ።",
+      "resumeRequired": "CV ፋይል ያስፈልጋል።",
+      "uploadAndJobFirst": "መጀመሪያ CV እና የስራ መግለጫ ያክሉ።",
+      "jobFirst": "መጀመሪያ የስራ መግለጫ ያክሉ።",
+      "analysisFirst": "የተሻሻለ CV ከመፍጠርዎ በፊት ትንታኔውን ያሂዱ።",
+      "cvFirst": "ከማውጣትዎ በፊት የተሻሻለ CV ይፍጠሩ።"
+    },
+    "messages": {
+      "interrupted": "ትንታኔው በመጫን ምክንያት ተቋርጧል። ለመቀጠል እንደገና ተንትን ይጫኑ።",
+      "recovered": "ረቂቅዎ ከገጽ መጫን በኋላ ተመልሷል።",
+      "recoveredToast": "ያለፈው የትንታኔ ረቂቅዎ ተመልሷል።",
+      "resumeSelected": "CV ፋይል ተመርጧል።",
+      "analysisComplete": "ትንታኔው ተጠናቋል።",
+      "noJobs": "ለዚህ መገለጫ ስራዎች አልተገኙም።",
+      "jobsReady": "የስራ ምክሮች ዝግጁ ናቸው።",
+      "noQuiz": "ጥያቄዎች አልተፈጠሩም። እንደገና ይሞክሩ።",
+      "quizReady": "የቃለ መጠይቅ ዝግጅት ዝግጁ ነው።",
+      "cvGenerated": "የተሻሻለ CV ረቂቅ ተፈጥሯል።",
+      "pdfStarted": "PDF ማውጣት ተጀምሯል።",
+      "draftCleared": "የትንታኔ ረቂቅ ተጠርጓል።"
+    },
+    "errors": {
+      "unexpectedHtml": "አገልጋዩ ያልተጠበቀ HTML መልስ መለሰ። እባክዎ ያድሱ እና እንደገና ይሞክሩ።",
+      "unexpectedFormat": "አገልጋዩ ያልተጠበቀ የመልስ ቅርጸት መለሰ።",
+      "analysisFailed": "ትንታኔው አልተሳካም።",
+      "jobsFailed": "ምክሮችን መጫን አልተሳካም።",
+      "quizFailed": "የቃለ መጠይቅ ጥያቄዎችን መፍጠር አልተሳካም።",
+      "cvFailed": "የተሻሻለ CV መፍጠር አልተሳካም።",
+      "pdfFailed": "የተሻሻለ CV ማውጣት አልተሳካም።"
+    }
+  },
+  "loading": {
+    "mainTitle": "የስራ ቦታዎ በመዘጋጀት ላይ",
+    "mainSubtitle": "የCVSmart ተሞክሮ በመጫን ላይ...",
+    "authTitle": "ደህንነቱ የተጠበቀ መግቢያ በመዘጋጀት ላይ",
+    "authSubtitle": "የመግቢያ ሂደትዎ በመጫን ላይ..."
   }
 }

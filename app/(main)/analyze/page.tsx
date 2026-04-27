@@ -1,7 +1,12 @@
+"use client";
+
 import { AnalyzeWorkflowForm } from "@/components/forms/analyze-workflow-form";
 import { Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function AnalyzePage() {
+  const t = useTranslations("analyze.page");
+
   return (
     <main className="analyze-page relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 z-0">
@@ -17,10 +22,10 @@ export default function AnalyzePage() {
             </div>
           </div>
           <h1 className="text-center text-4xl font-bold tracking-tight md:text-5xl">
-            Resume <span className="font-serif italic">Analyzer</span>
+            {t("titlePrefix")} <span className="font-serif italic">{t("titleHighlight")}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted-foreground">
-            Upload your resume and job description to get AI-powered insights and recommendations.
+            {t("subtitle")}
           </p>
         </div>
       </header>

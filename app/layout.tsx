@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({
           <I18nProvider>
             {children}
             <Toaster richColors position="top-center" closeButton />
+            <Analytics />
           </I18nProvider>
         </ThemeProvider>
       </body>

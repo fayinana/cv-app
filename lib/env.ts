@@ -5,6 +5,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   GOOGLE_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).optional(),
+  GEMINI_FALLBACK_MODELS: z.string().min(1).optional(),
   SERPAPI_API_KEY: z.string().min(1).optional(),
 });
 type Env = z.infer<typeof envSchema>;
@@ -27,6 +29,8 @@ export const isSupabaseConfigured =
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
       GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+      GEMINI_MODEL: process.env.GEMINI_MODEL,
+      GEMINI_FALLBACK_MODELS: process.env.GEMINI_FALLBACK_MODELS,
       SERPAPI_API_KEY: process.env.SERPAPI_API_KEY,
     };
   

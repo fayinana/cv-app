@@ -30,7 +30,21 @@
     "atsDesc": "Seenaa du'a keessan sirna qorannoo filannoo irraa gahuuf teessoo kenna.",
     "actionableTitle": "Gargaarsa Gocha Qabu",
     "actionableDesc": "Seenaa du'a keessan cimsuuf fi gaaffii ga'aa dabalatuuf yaada adeemsa kenna.",
-    "learnMore": "Dabalataan Baradhu"
+    "learnMore": "Dabalataan Baradhu",
+    "keyFeaturesSubtitle": "Waan hojii wajjin walsimuu hubachuuf, CV fooyyessuuf, fi gara af-gaaffiitti saffisaan deemuu barbaachisu hunda.",
+    "simpleProcess": "Adeemsa Salphaa",
+    "threeSteps": "Tarkaanfii sadiin gara",
+    "resumePerfection": "amantaa CV",
+    "threeStepsSubtitle": "CV jalqabaa irraa gara galmee hojii irratti xiyyeeffateetti adeemsa qajeelfamaan deemi.",
+    "step1Title": "CV kee fe'i",
+    "step1Desc": "CVSmart muuxannoo kee akka hubatuuf faayila PDF, DOCX, yookaan TXT kee nagaan dabali.",
+    "step2Title": "Hojii wajjin walsimsiisi",
+    "step2Desc": "Ibsa hojii galchi; cimina, hanqina, fi walsimannaa ATS irratti xiinxala xiyyeeffate argadhu.",
+    "step3Title": "Fooyyessi fi baasi",
+    "step3Desc": "Draft CV fooyya'e uumi, template ogummaa filadhu, PDF qulqulluu baasi.",
+    "ctaTitle": "Iyyata cimaa ijaaruuf qophii qabdaa?",
+    "ctaSubtitle": "CV kee xiinxali, sirreeffama bu'a qabeessa adda baasi, daqiiqaa muraasa keessatti CV hojii irratti xiyyeeffate uumi.",
+    "getStartedFree": "Bilisa Jalqabi"
   },
   "footer": {
     "allRightsReserved": "Mirga hundi kan eegamu.",
@@ -43,5 +57,145 @@
     "contact": "Nu qunnamaa",
     "privacy": "Iccitii",
     "terms": "Haala"
+  },
+  "analyze": {
+    "page": {
+      "titlePrefix": "Xiinxala",
+      "titleHighlight": "CV",
+      "subtitle": "CV kee fi ibsa hojii fe'i; hubannoo AI, gorsa hojii, qophii af-gaaffii, fi CV fooyya'e argadhu."
+    },
+    "steps": {
+      "upload": "CV fe'i",
+      "job": "Ibsa hojii",
+      "results": "Bu'aa ilaali"
+    },
+    "upload": {
+      "title": "CV fe'i",
+      "description": "Faayila CV fe'uuf cuqaasi yookaan harkisiitii gadi dhiisi.",
+      "prompt": "CV kee fe'uuf cuqaasi yookaan asitti harkisi",
+      "dropHere": "CV kee asitti gadi dhiisi",
+      "help": "PDF, DOCX, yookaan TXT (hanga 10MB)",
+      "ready": "Faayilli xiinxalaaf qophaa'eera",
+      "empty": "Faayilli hin filatamne"
+    },
+    "job": {
+      "title": "Ibsa hojii",
+      "description": "Ibsa hojii barbaadde maxxansi. Yoo xiqqaate qubee 20.",
+      "placeholder": "Ibsa hojii asitti maxxansi..."
+    },
+    "tabs": {
+      "overview": "Cuunfaa",
+      "breakdown": "Bal'ina",
+      "actions": "Tarkaanfii",
+      "cv": "CV fooyya'e"
+    },
+    "actions": {
+      "dismiss": "cufi",
+      "next": "Itti aanu",
+      "back": "Deebi'i",
+      "analyze": "Xiinxali",
+      "backToJob": "Gara ibsa hojiitti deebi'i",
+      "reanalyze": "Irra deebi'i xiinxali",
+      "reset": "Haqi"
+    },
+    "status": {
+      "analyzing": "Xiinxalaa jira"
+    },
+    "results": {
+      "applyingFor": "Kan itti iyyattu",
+      "overallMatch": "Walsimannaa waliigalaa",
+      "outOf100": "100 keessaa",
+      "strengths": "Cimina",
+      "gaps": "Hanqina",
+      "gapsToAddress": "Hanqina sirreeffamuu qabu",
+      "noStrengths": "Ciminii hin kennamne.",
+      "noGaps": "Hanqinni hin kennamne.",
+      "fullAnalysis": "Xiinxala guutuu",
+      "technicalAlignment": "Walsimannaa teeknikaa",
+      "experienceMatch": "Walsimannaa muuxannoo",
+      "projectRelevance": "Walitti dhufeenya pirojektii",
+      "communicationFit": "Quunnamtii fi walsimannaa",
+      "technicalFallback": "Walsimannaa teeknikaa cimaa",
+      "experienceFallback": "Sadarkaa muuxannoo fedhii hojii wajjin madaalame",
+      "projectFallback": "Fakkeenya pirojektii daangaa hojii wajjin walsimu",
+      "communicationFallback": "Walsimannaa quunnamtii ogummaa"
+    },
+    "cv": {
+      "title": "CV fooyya'e uumi",
+      "description": "Ibsa hojii, qabxii walsimannaa, cimina, fi hanqina xiinxala kanaa fayyadamuun draft CV xiyyeeffannoo qabu uumi.",
+      "generate": "CV fooyya'e uumi",
+      "generating": "CV uumamaa jira...",
+      "template": "Template",
+      "exportPdf": "PDF baasi",
+      "previewTitle": "Durargii CV",
+      "previewDescription": "Osoo hin baasin dura CV fooyya'e ilaali.",
+      "ready": "Qophaa'e",
+      "emptyTitle": "CV fooyya'e ammatti hin uumamne",
+      "emptyDescription": "Template ilaaluuf fi PDF baasuuf draft uumi."
+    },
+    "templates": {
+      "classic": "Classic",
+      "modern": "Modern",
+      "minimal": "Minimal"
+    },
+    "actionsPanel": {
+      "jobsTitle": "Gorsa hojii argadhu",
+      "jobsDescription": "Hojiiwwan CV kee fi ibsa hojii kana irratti hundaa'anii dhuunfaaf qophaa'an.",
+      "findingJobs": "Hojii barbaadaa jira...",
+      "findRecommendations": "Gorsa barbaadi",
+      "searchQuery": "Jecha barbaacha: {query}",
+      "recommendedJobs": "Hojiiwwan gorfaman",
+      "locationNotSpecified": "Bakka hin ibsamne",
+      "openJob": "{title} bani"
+    },
+    "quiz": {
+      "title": "Qophii af-gaaffii",
+      "description": "Gaaffilee shaakala af-gaaffii hojii barbaadde irraa uumi.",
+      "generating": "Gaaffilee uumamaa jiru...",
+      "generate": "Gaaffilee shaakala uumi",
+      "practiceTitle": "Shaakala Af-gaaffii",
+      "submit": "Deebii galchi",
+      "score": "Qabxii: {score} / {total}",
+      "retake": "Irra deebi'i"
+    },
+    "validation": {
+      "invalidFileType": "Faayila PDF, DOCX, yookaan TXT fe'i.",
+      "fileTooLarge": "Faayilli baay'ee guddaadha. Hangi guddaan 10MB.",
+      "resumeAndJobRequired": "Maaloo CV fe'i, ibsa hojii qubee 20 ol qabu dabali.",
+      "resumeRequired": "Faayilli CV ni barbaachisa.",
+      "uploadAndJobFirst": "Jalqaba CV fi ibsa hojii dabali.",
+      "jobFirst": "Jalqaba ibsa hojii dabali.",
+      "analysisFirst": "CV fooyya'e uumuu dura xiinxala geggeessi.",
+      "cvFirst": "Osoo hin baasin dura CV fooyya'e uumi."
+    },
+    "messages": {
+      "interrupted": "Xiinxalli reloadiin addaan cite. Itti fufuuf Xiinxali irra deebi'i cuqaasi.",
+      "recovered": "Draft kee erga fuulli deebi'ee fe'amee booda deebi'eera.",
+      "recoveredToast": "Draft xiinxala kee duraanii deebi'eera.",
+      "resumeSelected": "Faayilli CV filatameera.",
+      "analysisComplete": "Xiinxalli xumurameera.",
+      "noJobs": "Hojiiwwan profile kanaaf hin argamne.",
+      "jobsReady": "Gorsi hojii qophaa'eera.",
+      "noQuiz": "Gaaffileen ammatti hin uumamne. Irra deebi'i yaali.",
+      "quizReady": "Qophiin af-gaaffii qophaa'eera.",
+      "cvGenerated": "Draft CV fooyya'e uumameera.",
+      "pdfStarted": "Baasuun PDF jalqabameera.",
+      "draftCleared": "Draft xiinxalaa haqameera."
+    },
+    "errors": {
+      "unexpectedHtml": "Server deebii HTML hin eegamne deebise. Maaloo haaromsiitii irra deebi'i yaali.",
+      "unexpectedFormat": "Server bifa deebii hin eegamne deebise.",
+      "analysisFailed": "Xiinxalli hin milkoofne.",
+      "jobsFailed": "Gorsa fe'uu hin dandeenye.",
+      "quizFailed": "Gaaffilee af-gaaffii uumuu hin dandeenye.",
+      "cvFailed": "CV fooyya'e uumuu hin dandeenye.",
+      "pdfFailed": "CV fooyya'e baasuuf hin milkoofne."
+    }
+  },
+  "loading": {
+    "mainTitle": "Iddoo hojii kee qopheessaa jira",
+    "mainSubtitle": "Muuxannoo CVSmart fe'aa jira...",
+    "authTitle": "Seensa nageenya qabu qopheessaa jira",
+    "authSubtitle": "Adeemsa seensa kee fe'aa jira..."
   }
 }
